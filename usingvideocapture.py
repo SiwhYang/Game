@@ -17,11 +17,11 @@ import gc
 class Script():
  
     def __init__(self):
-        self.template = cv2.imread("./template/template.png")
+        self.template = cv2.imread("./template/template.jpg")
         return
  
     def Screen_Capture(self):
-        bounding_box = {'top': 1, 'left': 1, 'width': 1000, 'height': 800}
+        bounding_box = {'top': 1, 'left': 1, 'width': 1300, 'height': 800}
         i = 0
         sct = mss()
         while (i < 1):
@@ -58,7 +58,7 @@ class Script():
                 # check if find monster
             result = self.If_clickMonster(frame_out,self.template)
             print(result)
-            cv2.imshow('frame', gray)
+            cv2.imshow('frame', frame_out)
             if cv2.waitKey(1) == ord('q'):
                 break
 
@@ -72,11 +72,11 @@ class Script():
         return 
     def If_clickMonster(self,frame,template):
         template = cv2.imread("./template/template.jpg")
-        frame = cv2.imread("./data/0001.jpg")
-        result = False
-        resize_frame = frame#cv2.resize(frame,(template.shape[1],template.shape[0])) 
-        res = (cv2.matchTemplate(frame,template,cv2.TM_CCOEFF_NORMED))
+        frame = cv2.imread("./template/0001.jpg")
         
+        resize_template = template#cv2.resize(template,(frame.shape[1],frame.shape[0])) 
+        res = (cv2.matchTemplate(frame,resize_template,cv2.TM_CCOEFF_NORMED))
+        # cv2.imwrite("./template/0002.jpg",resize_template)
         minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(res)
         return maxVal
     
