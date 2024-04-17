@@ -1,7 +1,7 @@
 
 import cv2 as cv2
 import numpy as np
-from PIL import ImageGrab
+# from PIL import ImageGrab
 import pyautogui
 import time
 from mss import mss
@@ -18,16 +18,17 @@ class Script():
     def __init__(self):
         global hWnd 
         # hWnd =  win32gui.FindWindow(None, 'Calculator')
-        hWnd =  win32gui.FindWindow(None, 'Calculator')
+        # hWnd =  win32gui.FindWindow(None, 'LINE')
+        hWnd =  win32gui.FindWindow(None, 'RF Online')
         
-        print(hWnd)
         return
  
     def Screen_Capture(self):
-       
+        
         hwnd = hWnd
-        hWnd1= win32gui.FindWindowEx(hwnd, None, None, None)
-
+        # print(hWnd)
+        # for i in range(0,100):
+        #     self.Mouse_movement(500+i,500+i)
         # hwnd = win32gui.FindWindow(None, 'Calculator')
         # https://stackoverflow.com/questions/19695214/screenshot-of-inactive-window-printwindow-win32gui
         
@@ -68,7 +69,7 @@ class Script():
         saveDC.DeleteDC()
         mfcDC.DeleteDC()
         win32gui.ReleaseDC(hwnd, hwndDC)
-
+        
         if result == 1:
             #PrintWindow Succeeded
             im.save("./data/0001.jpg")
@@ -76,8 +77,8 @@ class Script():
  
     def Show_Screen(self):
         self.Screen_Capture()
-        object_detector = cv2.createBackgroundSubtractorMOG2() 
         
+        object_detector = cv2.createBackgroundSubtractorMOG2() 
         while (True):
             cap = cv2.VideoCapture("./data/0001.jpg",cv2.CAP_IMAGES)
             ret, frame = cap.read()
@@ -88,13 +89,14 @@ class Script():
             dilated = cv2.dilate(mask_eroded,cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3)),iterations = 2)
     
             contours,_ = cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE) 
-            min_contour_area = 500  # Define your minimum area threshold
+            min_contour_area = 10  # Define your minimum area threshold
             large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
             frame_out = frame.copy()
             for cnt in large_contours:
                 x, y, w, h = cv2.boundingRect(cnt)
                 center_x = (x*2 + w)/2
                 center_y = (y*2 + h)/2
+                self.Mouse_movement(center_x,center_y)
                 # self.Mouse_movement(center_x,center_y)
                 frame = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
             
@@ -104,31 +106,18 @@ class Script():
             self.Screen_Capture()
     
     def Mouse_movement(self,x,y):
-        x,y = int(x),int(y)
-        hWnd =  win32gui.FindWindow(None, 'Calculator')
-        lParam = win32api.MAKELONG(x, y)
-
+        x,y = int(x),int(y) 
         hWnd1= win32gui.FindWindowEx(hWnd, None, None, None)
-        win32gui.SendMessage(hWnd1, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
-        win32gui.SendMessage(hWnd1, win32con.WM_LBUTTONUP, None, lParam)
+        lParam = win32api.MAKELONG(x,y)
+        pyautogui.leftClick(x, y)
+        win32api.SendMessage(hWnd1, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
+        win32api.SendMessage(hWnd1, win32con.WM_LBUTTONUP, None, lParam)
 
-        # hWnd1= win32gui.FindWindowEx(hWnd, None, None, None)
-        # x,y=int(x),int(y)
-        # lParam = win32api.MAKELONG(x,y)
-        # pyautogui.leftClick(x, y)
-        # win32api.SendMessage(hWnd1, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
-        # win32api.SendMessage(hWnd1, win32con.WM_LBUTTONUP, None, lParam)
-        # win32api.PostMessage( hWnd,win32con.WM_CHAR, ord('x'), 0)
-        # print(x,y)
-        # # lParam = win32api.MAKELONG(100,886)
-        # win32api.PostMessage(hWnd1, win32con.WM_LBUTTONDOWN, win32con.MK_LBUTTON, lParam)
-        # win32api.PostMessage(hWnd1, win32con.WM_LBUTTONUP, None, lParam)
         
 
     def Object_detection (self):
         
-        return name
-
+        return 
 
 
 script = Script()
