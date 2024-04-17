@@ -1,0 +1,71 @@
+
+import cv2 as cv2
+import numpy as np
+from PIL import ImageGrab
+import pyautogui
+import time
+from mss import mss
+from PIL import Image
+import threading
+import time
+import pywintypes # // https://stackoverflow.com/questions/3956178/cant-load-pywin32-library-win32gui adding for import dll file to init win32gui
+import win32gui
+
+class Script():
+ 
+    def __init__(self):
+        return
+ 
+    def Screen_Capture(self):
+        bounding_box = {'top': 0, 'left': 0, 'width': 500, 'height': 500}
+        i = 0
+        sct = mss()
+        while (i < 1):
+            screenshot = np.array(sct.grab(bounding_box))
+            # screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+            a = cv2.imwrite("./data/000{}.jpg".format(i),screenshot)            
+            i = i + 1
+ 
+    def Show_Screen(self):
+        self.Screen_Capture()
+        object_detector = cv2.createBackgroundSubtractorMOG2() 
+        while (True):
+            cap = cv2.VideoCapture("./data/%04d.jpg",cv2.CAP_IMAGES)
+            ret, frame = cap.read()
+            gray = object_detector.apply(frame) 
+            _,mask = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+            mask_eroded = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+            dilated = cv2.dilate(mask_eroded,cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3)),iterations = 2)
+    
+            contours,_ = cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE) 
+            min_contour_area = 500  # Define your minimum area threshold
+            large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
+            frame_out = frame.copy()
+            for cnt in large_contours:
+                x, y, w, h = cv2.boundingRect(cnt)
+                center_x = (x*2 + w)/2
+                center_y = (y*2 + h)/2
+                self.Mouse_movement(center_x,center_y)
+                frame = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
+            
+            cv2.imshow('frame', frame)
+            if cv2.waitKey(1) == ord('q'):
+                break
+            self.Screen_Capture()
+    
+    def Mouse_movement(self,x,y):
+        pyautogui.moveTo(x,y)
+        return 
+    def Object_detection (self):
+        
+        return name
+
+
+
+script = Script()
+script.Screen_Capture()
+script.Show_Screen()
+
+ 
+ 
