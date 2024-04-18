@@ -14,7 +14,7 @@ import pydirectinput
 import gc
 import pyautogui
 import matplotlib.pyplot as plt
- 
+import pytesseract
 
 class Script():
  
@@ -42,6 +42,8 @@ class Script():
             frame_out = frame
             gray = object_detector.apply(frame) 
             _,mask = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
+            
+
             kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
             mask_eroded = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
             dilated = cv2.dilate(mask_eroded,cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3)),iterations = 2)
@@ -50,24 +52,38 @@ class Script():
             min_contour_area = 500  # Define your minimum area threshold
             large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
             
-            center_x_click,center_y_click = 0,0
-            for cnt in large_contours:
-                x, y, w, h = cv2.boundingRect(cnt)
-                center_x = (x*2 + w)/2
-                center_y = (y*2 + h)/2
-                frame = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
-                center_x_click,center_y_click = center_x, center_y
-  
+            _,text = cv2.threshold(frame,100,255,cv2.THRESH_BINARY)
+            hsv = cv2.cvtColor(text, cv2.COLOR_BGR2HSV)
+            text_hsv = cv2.inRange(hsv,(0, 255, 255), (1, 255, 255) )
+            pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+            text = pytesseract.image_to_string(text_hsv,lang = 'eng')
+
+            if 'Hobo' in text or 'Beta' in text:
+                print(text)
+                print("yes")
+                
+            else:
+                center_x_click,center_y_click = 0,0
+                for cnt in large_contours:
+                    x, y, w, h = cv2.boundingRect(cnt)
+                    center_x = (x*2 + w)/2
+                    center_y = (y*2 + h)/2
+                    frame = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
+                    # center_x_click,center_y_click = center_x, center_y
+                    # self.Mouse_movement(center_x,center_y)
+    
+                
+                
 
             # self.Check_Monster(frame)
             # self.Keyboard_press("space",3)
-            if_clickMonster = self.If_clickMonster(frame,self.template)
-            if (if_clickMonster == False) : # check if not seclected
-                print("1. Monster not selected")
-                if (len(large_contours)<10) : # wait until screen stationary
-                    print("2. Screen is stationary")
-                    self.Mouse_movement(center_x_click,center_y_click)
-                    pass 
+            # if_clickMonster = self.If_clickMonster(frame,self.template)
+            # if (if_clickMonster == False) : # check if not seclected
+            #     print("1. Monster not selected")
+            #     if (len(large_contours)<10) : # wait until screen stationary
+            #         print("2. Screen is stationary")
+            #         self.Mouse_movement(center_x_click,center_y_click)
+            #         pass 
             #     else : pass # not seleted and not stationary, pass and wait for next frame
             # else :  
             #     print("we found monster !")
@@ -76,7 +92,7 @@ class Script():
                  # keep defeating prcoess until not selected, we cant use while beacause we need to reresh frame
 
 
-            cv2.imshow('frame', frame)           
+            cv2.imshow('frame', text_hsv)           
             if cv2.waitKey(1) == ord('q'):
                 break
 
@@ -198,8 +214,8 @@ class Script():
     
     
 script = Script()
-script.Show_Screen() 
-# script.Main()
+# script.Show_Screen() 
+script.Main()
 # sc ript.Process_of_defeat() 
 
  
