@@ -48,19 +48,24 @@ class Script():
             min_contour_area = 500  # Define your minimum area threshold
             large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
             
-           
-            if (self.If_clickMonster<200) : # check if not seclected
+            center_x_click,center_y_click = 0,0
+            for cnt in large_contours:
+                x, y, w, h = cv2.boundingRect(cnt)
+                center_x = (x*2 + w)/2
+                center_y = (y*2 + h)/2
+                frame = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
+                center_x_click,center_y_click = center_x, center_y
+
+            if_clickMonster = self.If_clickMonster(frame,self.template)
+            if (if_clickMonster == False) : # check if not seclected
+                # print("1. Monster not selected")
                 if (len(large_contours)<10) : # wait until screen stationary
-                    center_x_click,center_y_click = 0,0
-                    for cnt in large_contours:
-                        x, y, w, h = cv2.boundingRect(cnt)
-                        center_x = (x*2 + w)/2
-                        center_y = (y*2 + h)/2
-                        frame = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
-                        center_x_click,center_y_click = center_x, center_y
-                    self.Mouse_movement(center_x_click,ccenter_y_clickenter_y)
+                    # print("2. Screen is stationary")
+                    self.Mouse_movement(center_x_click,center_y_click)
                 else : pass # not seleted and not stationary, pass and wait for next frame
-            else : pass
+            else : 
+                print("we found monster !")
+                pass
                  # keep defeating prcoess until not selected, we cant use while beacause we need to reresh frame
                     
 
@@ -78,8 +83,14 @@ class Script():
             if cv2.waitKey(1) == ord('q'):
                 break
     def Process_of_defeat(self):
+        self.Keyboard_input("F1")
+        time.sleep(1)
+        self.Keyboard_input("space")
         return
-
+    
+    def Keyboard_input (self, keyboard):
+        pyautogui.press(keyboard)
+        return 
     def Mouse_movement(self,x,y):
         x,y = int(x),int(y)
         pydirectinput.moveTo(x, y)
@@ -101,8 +112,10 @@ class Script():
         for m,n in matches:
             if m.distance < 0.75*n.distance:
                 good.append([m])
-        result = len(good)
-        
+        result = False
+        threashold = 200
+        if len(good) > 200 :
+            result = True
         # cv.drawMatchesKnn expects list of lists as matches.
         # img3 = cv2.drawMatchesKnn(frame,kp1,template,kp2,good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
         # plt.imshow(img3),plt.show()
@@ -111,8 +124,8 @@ class Script():
     
     
 script = Script()
-# script.If_clickMonster(1,1)
 script.Show_Screen()
+# script.Process_of_defeat()
 
  
  
