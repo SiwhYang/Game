@@ -12,33 +12,31 @@ import pywintypes # // https://stackoverflow.com/questions/3956178/cant-load-pyw
 import win32gui
 import pydirectinput
 import gc
+import pyautogui
 
 
 class Script():
  
     def __init__(self):
-        self.template = cv2.imread("./template/template.jpg")
+        self.template = cv2.imread("./template/template1.jpg")
         return
  
     def Screen_Capture(self):
-        bounding_box = {'top': 1, 'left': 1, 'width': 1300, 'height': 800}
-        i = 0
-        sct = mss()
-        while (i < 1):
+        with mss() as sct :
+            bounding_box = {'top': 1, 'left': 1, 'width': 1300, 'height': 800}
             screenshot = np.array(sct.grab(bounding_box))
-            # screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
-            a = cv2.imwrite("./data/0001.jpg".format(i),screenshot)            
-            i = i + 1
-            del screenshot
-            gc.collect()
+            cv2.imwrite("./data/0001.jpg",screenshot) 
+        # https://stackoverflow.com/questions/54719730/when-taking-many-screenshots-with-mss-memory-fills-quickly-and-crashes-python
+        # context manager
+        return
     
     def Show_Screen(self):
-        self.Screen_Capture()
         object_detector = cv2.createBackgroundSubtractorMOG2() 
         while (True):
+            self.Screen_Capture()
             cap = cv2.VideoCapture("./data/0001.jpg",cv2.CAP_IMAGES)
             ret, frame = cap.read()
-            frame_out = frame.copy()
+            frame_out = frame
             gray = object_detector.apply(frame) 
             _,mask = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
             kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
@@ -58,34 +56,25 @@ class Script():
                 # check if find monster
             result = self.If_clickMonster(frame_out,self.template)
             print(result)
-            cv2.imshow('frame', frame_out)
+            cv2.imshow('frame', frame_out)           
             if cv2.waitKey(1) == ord('q'):
                 break
-
-
-            self.Screen_Capture()
-    
+           
     def Mouse_movement(self,x,y):
         x,y = int(x),int(y)
         pydirectinput.moveTo(x, y)
         pydirectinput.click()
         return 
-    def If_clickMonster(self,frame,template):
-        template = cv2.imread("./template/template.jpg")
-        frame = cv2.imread("./template/0001.jpg")
-        
-        resize_template = template#cv2.resize(template,(frame.shape[1],frame.shape[0])) 
+    def If_clickMonster(self,frame,template):  
+        resize_template = template
         res = (cv2.matchTemplate(frame,resize_template,cv2.TM_CCOEFF_NORMED))
-        # cv2.imwrite("./template/0002.jpg",resize_template)
         minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(res)
         return maxVal
     
     
-
-
-
 script = Script()
-script.Screen_Capture()
+# while (True):
+#     script.Screen_Capture()
 script.Show_Screen()
 
  
