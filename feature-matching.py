@@ -48,19 +48,29 @@ class Script():
             min_contour_area = 500  # Define your minimum area threshold
             large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
             
-            for cnt in large_contours:
-                x, y, w, h = cv2.boundingRect(cnt)
-                center_x = (x*2 + w)/2
-                center_y = (y*2 + h)/2
-                frame = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
-                # check if find monster
-                if (len(large_contours)<1) : # wait until screen stationary
-                    while (self.If_clickMonster<200): # check if seclected
-                        self.Mouse_movement(center_x,center_y)
-                        self.Process_of_defeat()
+           
+            if (self.If_clickMonster<200) : # check if not seclected
+                if (len(large_contours)<10) : # wait until screen stationary
+                    center_x_click,center_y_click = 0,0
+                    for cnt in large_contours:
+                        x, y, w, h = cv2.boundingRect(cnt)
+                        center_x = (x*2 + w)/2
+                        center_y = (y*2 + h)/2
+                        frame = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
+                        center_x_click,center_y_click = center_x, center_y
+                    self.Mouse_movement(center_x_click,ccenter_y_clickenter_y)
+                else : pass # not seleted and not stationary, pass and wait for next frame
+            else : pass
+                 # keep defeating prcoess until not selected, we cant use while beacause we need to reresh frame
+                    
 
+
+                    # try to click monster
                 # self.Mouse_movement(center_x,center_y)
-            result = self.If_clickMonster(frame_out,self.template)
+                #     while (self.If_clickMonster<200): # check if seclected
+                #         self.Process_of_defeat()
+                # self.Mouse_movement(center_x,center_y)
+            # result = self.If_clickMonster(frame_out,self.template)
             # print(result)
 
 
