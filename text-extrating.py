@@ -59,15 +59,15 @@ class Script():
                 center_x_click,center_y_click = center_x, center_y
   
 
-            self.Check_Monster(frame)
+            # self.Check_Monster(frame)
             # self.Keyboard_press("space",3)
-            # if_clickMonster = self.If_clickMonster(frame,self.template)
-            # if (if_clickMonster == False) : # check if not seclected
-            #     print("1. Monster not selected")
-            #     if (len(large_contours)<100) : # wait until screen stationary
-            #         print("2. Screen is stationary")
-            #         self.Mouse_movement(center_x_click,center_y_click)
-            #         pass 
+            if_clickMonster = self.If_clickMonster(frame,self.template)
+            if (if_clickMonster == False) : # check if not seclected
+                print("1. Monster not selected")
+                if (len(large_contours)<10) : # wait until screen stationary
+                    print("2. Screen is stationary")
+                    self.Mouse_movement(center_x_click,center_y_click)
+                    pass 
             #     else : pass # not seleted and not stationary, pass and wait for next frame
             # else :  
             #     print("we found monster !")
@@ -76,9 +76,9 @@ class Script():
                  # keep defeating prcoess until not selected, we cant use while beacause we need to reresh frame
 
 
-            # cv2.imshow('frame', frame)           
-            # if cv2.waitKey(1) == ord('q'):
-            #     break
+            cv2.imshow('frame', frame)           
+            if cv2.waitKey(1) == ord('q'):
+                break
 
     def Main(self):
         while(True):
@@ -140,7 +140,7 @@ class Script():
     def Mouse_movement(self,x,y):
         x,y = int(x),int(y)
         pydirectinput.moveTo(x, y)
-        pydirectinput.click()
+        # pydirectinput.click()
         return 
     def Check_Monster(self,frame):
         sift = cv2.SIFT_create()
