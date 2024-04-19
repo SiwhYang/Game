@@ -100,13 +100,13 @@ class Script():
         while(True):
             print(Moster_selected)
             if Moster_selected == False :
-                frame_out,x_list,y_list,check = self.Refresh_and_Process_screen(object_detector)  
+                frame_out,x_list,y_list,Findtext = self.Refresh_and_Process_screen(object_detector)  
                 for i in range(0,len(x_list)): 
                     self.Mouse_movement(x_list[i],y_list[i])
-                    frame_out,_,_,check = self.Refresh_and_Process_screen(object_detector)  
-                    if check == True:
-                        # self.Mouse_Click(x_list[i],y_list[i])
-                        check_if_click = self.If_clickMonster()
+                    frame_out,_,_,Findtext = self.Refresh_and_Process_screen(object_detector)  
+                    if Findtext == True:
+                        self.Mouse_Click(x_list[i],y_list[i])
+                        check_if_click = self.If_clickMonster(frame_out,self.template)
                         if check_if_click == True :
                             Moster_selected == True               
                         else :  
@@ -114,18 +114,22 @@ class Script():
                     else :  
                         Moster_selected == False
 
-                    cv2.imshow('frame', frame_out)           
+                    cv2.imshow('frame', frame_out)  
+                    if cv2.waitKey(1) == ord('q'):
+                        break         
             else : 
-                self.Process_of_defeat()
+                check_if_click = self.If_clickMonster()
+                while (check_if_click) : 
+                    frame_out,_,_,_ = self.Refresh_and_Process_screen(object_detector)   
+                    self.Defeating_Process()
+                    check_if_click = self.If_clickMonster(frame_out,self.template)
+                    cv2.imshow('frame', frame_out)           
+                Keyboard_input('F2')
+                Keyboard_press('space',5)
+                cv2.imshow('frame', frame_out)
+                if cv2.waitKey(1) == ord('q'):
+                        break                    
 
-
-            cv2.imshow('frame', frame_out)           
-            if cv2.waitKey(1) == ord('q'):
-                break
-
-    def Defeating_process (self):
-        return 
-    
 
     def Refresh_and_Process_screen(self,object_detector):
         self.Screen_Capture()
@@ -166,7 +170,7 @@ class Script():
         return frame_out, center_x_click, center_y_click, Result
     
 
-    def Process_of_defeat(self):
+    def Defeating_Process(self):
         self.Keyboard_input("F2")
         time.sleep(1) 
         self.Keyboard_input("F1")  
