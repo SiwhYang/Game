@@ -1,5 +1,7 @@
 import pydirectinput
 import time
-pydirectinput.keyDown('space')
-time.sleep(5)
-pydirectinput.keyUp('space')
+
+while (True):
+    pydirectinput.press('F1')
+    time.sleep(1)
+    pydirectinput.keyUp('F1')

@@ -2,19 +2,14 @@
 import cv2 as cv2
 import numpy as np
 from PIL import ImageGrab
-import pyautogui
 import time
 from mss import mss
-from PIL import Image
-import threading
-import time
 import pywintypes # // https://stackoverflow.com/questions/3956178/cant-load-pywin32-library-win32gui adding for import dll file to init win32gui
 import win32gui
 import pydirectinput
-import gc
-import pyautogui
 import matplotlib.pyplot as plt
 import pytesseract
+
 
 class Script():
  
@@ -89,7 +84,7 @@ class Script():
         dilated = cv2.dilate(mask_eroded,cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3)),iterations = 2)
 
         contours,_ = cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE) 
-        min_contour_area = 500  # Define your minimum area threshold
+        min_contour_area = 1000  # Define your minimum area threshold
         large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
         
         center_x_click = []
@@ -111,7 +106,7 @@ class Script():
         
         Result = False
         print(text)
-        if 'Ho' in text or 'Beta' in text or 'Cali' in text or 'P' in text:
+        if 'Ho' in text or 'Beta' in text or 'Cali' in text or 'Build' in text:
             Result = True
 
         return frame, center_x_click, center_y_click, Result
@@ -141,11 +136,14 @@ class Script():
         return 
     
     def Keyboard_press (self, keyboard, second):
-        for i in range (0,second):
+        interval = 0.1
+        loop_count = second/interval
+        for i in range (0,loop_count):
             pydirectinput.press(keyboard)
-            time.sleep(0.3)
+            time.sleep(interval)
             pydirectinput.keyUp(keyboard)
             i = i + 1
+            
     def Mouse_Click(self,x,y):
         x,y = int(x),int(y)
         pydirectinput.moveTo(x, y)
@@ -190,7 +188,3 @@ class Script():
 script = Script()
 # script.Show_Screen() 
 script.Main()
-# sc ript.Process_of_defeat() 
-
- 
-# script.Keyboard_input('space')
