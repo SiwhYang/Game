@@ -14,14 +14,12 @@ import pydirectinput
 import gc
 import pyautogui
 import matplotlib.pyplot as plt
-import pytesseract
+# import pytesseract
 
 class Script():
  
     def __init__(self):
         self.template = cv2.imread("./template/template1.jpg")
-        self.calliana = cv2.imread("./template/calliana.png")
-        self.Beta = cv2.imread("./template/Beta.png")
         return
   
     def Screen_Capture(self):
@@ -55,9 +53,9 @@ class Script():
             _,text = cv2.threshold(frame,100,255,cv2.THRESH_BINARY)
             hsv = cv2.cvtColor(text, cv2.COLOR_BGR2HSV)
             text_hsv = cv2.inRange(hsv,(0, 255, 255), (1, 255, 255) )
-            pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-            text = pytesseract.image_to_string(text_hsv,lang = 'eng')
-
+            # pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+            # text = pytesseract.image_to_string(text_hsv,lang = 'eng')
+            text = "sss"
             if 'Hobo' in text or 'Beta' in text:
                 print(text)
                 print("yes")
@@ -97,16 +95,39 @@ class Script():
                 break
 
     def Main(self):
+        object_detector = cv2.createBackgroundSubtractorMOG2() 
+        Moster_selected = False
         while(True):
-            frame_out,a,b = self.Refresh_and_Process_screen()
+            print(Moster_selected)
+            if Moster_selected == False :
+                frame_out,x_list,y_list,check = self.Refresh_and_Process_screen(object_detector)  
+                for i in range(0,len(x_list)): 
+                    self.Mouse_movement(x_list[i],y_list[i])
+                    frame_out,_,_,check = self.Refresh_and_Process_screen(object_detector)  
+                    if check == True:
+                        # self.Mouse_Click(x_list[i],y_list[i])
+                        check_if_click = self.If_clickMonster()
+                        if check_if_click == True :
+                            Moster_selected == True               
+                        else :  
+                            Moster_selected == False
+                    else :  
+                        Moster_selected == False
+
+                    cv2.imshow('frame', frame_out)           
+            else : 
+                self.Process_of_defeat()
+
+
             cv2.imshow('frame', frame_out)           
             if cv2.waitKey(1) == ord('q'):
                 break
+
     def Defeating_process (self):
         return 
     
-    def Refresh_and_Process_screen(self):
-        object_detector = cv2.createBackgroundSubtractorMOG2() 
+
+    def Refresh_and_Process_screen(self,object_detector):
         self.Screen_Capture()
         cap = cv2.VideoCapture("./data/0001.jpg",cv2.CAP_IMAGES)
         ret, frame = cap.read()
@@ -121,15 +142,28 @@ class Script():
         min_contour_area = 500  # Define your minimum area threshold
         large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
         
-        center_x_click,center_y_click = 0,0
+        center_x_click = []
+        center_y_click = []
         for cnt in large_contours:
             x, y, w, h = cv2.boundingRect(cnt)
             center_x = (x*2 + w)/2
             center_y = (y*2 + h)/2
             frame_out = cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
-            center_x_click,center_y_click = center_x, center_y
+            center_x_click.append(center_x)
+            center_y_click.append(center_y)
         
-        return frame_out, center_x_click, center_y_click
+
+        _,text = cv2.threshold(frame,100,255,cv2.THRESH_BINARY)
+        hsv = cv2.cvtColor(text, cv2.COLOR_BGR2HSV)
+        text_hsv = cv2.inRange(hsv,(0, 255, 255), (1, 255, 255) )
+        # pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+        # text = pytesseract.image_to_string(text_hsv,lang = 'eng')
+        text = "sss"
+        Result = False
+        if 'Hobo' in text or 'Beta' in text or 'Cali' in text:
+            Result = False
+
+        return frame_out, center_x_click, center_y_click, Result
     
 
     def Process_of_defeat(self):
@@ -152,6 +186,12 @@ class Script():
         pydirectinput.keyDown(keyboard)
         time.sleep(second)
         pydirectinput.keyUp(keyboard)
+
+    def Mouse_Click(self,x,y):
+        x,y = int(x),int(y)
+        pydirectinput.moveTo(x, y)
+        pydirectinput.click()
+        return 
 
     def Mouse_movement(self,x,y):
         x,y = int(x),int(y)
