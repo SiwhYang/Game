@@ -19,7 +19,7 @@ class Script():
   
     def Screen_Capture(self):
         with mss() as sct :
-            bounding_box = {'top': 1, 'left': 1, 'width': 1000, 'height': 1000}
+            bounding_box = {'top': 1, 'left': 1, 'width': 1300, 'height': 1000}
             screenshot = np.array(sct.grab(bounding_box))
             cv2.imwrite("./data/0001.jpg",screenshot) 
         # https://stackoverflow.com/questions/54719730/when-taking-many-screenshots-with-mss-memory-fills-quickly-and-crashes-python
@@ -34,6 +34,8 @@ class Script():
             print(Moster_selected)
             frame_out,x_list,y_list,Findtext = self.Refresh_and_Process_screen(object_detector)  
             if Moster_selected == False :
+                self.Keyboard_input('F2')
+                self.Keyboard_input('Esc')
                 for i in range(0,len(x_list)): 
                     self.Mouse_movement(x_list[i],y_list[i])
                     time.sleep(0.1)
@@ -64,10 +66,10 @@ class Script():
                     self.Defeating_Process()
                     check_if_click = self.If_clickMonster(frame_out,self.template)
                     # cv2.imshow('frame', frame_out)           
-                self.Keyboard_input('F2')
-                self.Keyboard_press('space',5)
+                # self.Keyboard_input('F2')
+                self.Keyboard_press('space',3)
                 Moster_selected = False
-                # cv2.imshow('frame', frame_out)
+                # cv2.imshow('f rame', frame_out)
                 # if cv2.waitKey(1) == ord('q'):
                 #         break                    
 
@@ -81,7 +83,7 @@ class Script():
         _,mask = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
         mask_eroded = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-        dilated = cv2.dilate(mask_eroded,cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3,3)),iterations = 2)
+        dilated = cv2.dilate(mask_eroded,cv2. getStructuringElement(cv2.MORPH_ELLIPSE, (3,3)),iterations = 2)
 
         contours,_ = cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE) 
         min_contour_area = 1000  # Define your minimum area threshold
@@ -106,7 +108,7 @@ class Script():
         
         Result = False
         print(text)
-        if 'Ho' in text or 'Beta' in text or 'Cali' in text or 'Build' in text:
+        if 'sa' in text or 'Beta' in text or 'Ass' in text or 'lder' in text:
             Result = True
 
         return frame, center_x_click, center_y_click, Result
@@ -121,11 +123,7 @@ class Script():
     def Defeating_Process(self):
         self.Keyboard_input("space")
         self.Keyboard_input("F1")
-        time.sleep(1) 
-        
-        
-          
-       
+        time.sleep(0.1) 
         # self.Keyboard_input("Esc")
         return
     
@@ -137,13 +135,14 @@ class Script():
     
     def Keyboard_press (self, keyboard, second):
         interval = 0.1
-        loop_count = second/interval
+        second = 1
+        loop_count = int(second/interval)
         for i in range (0,loop_count):
-            pydirectinput.press(keyboard)
+            pydirectinput. press(keyboard)
             time.sleep(interval)
             pydirectinput.keyUp(keyboard)
             i = i + 1
-            
+
     def Mouse_Click(self,x,y):
         x,y = int(x),int(y)
         pydirectinput.moveTo(x, y)
@@ -155,7 +154,6 @@ class Script():
         pydirectinput.moveTo(x, y)
         # pydirectinput.click()
         return 
-
 
     def If_clickMonster(self,frame,template):  
         # frame = cv2.imread("./template/0001.jpg")
