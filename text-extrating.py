@@ -92,10 +92,40 @@ class Script():
         
         Result = False
         print(text)
-        if 'sa' in text or 'Bui' in text or 'Ass' in text or 'der' in text:
+        if 'sa' in text or 'Bui' in text or 'Ass' in text or 'der' in text or 'Cal' in text:
+        # if 'Cali' in text or 'Alpha' in text or 'Pl' in text or 'Hobo' in text:
+        # if 'Crystal' in text or 'Ore' in text  :
             Result = True
 
         return text_hsv,Result
+    
+
+    def test_screen(self,object_detector):
+        self.Screen_Capture()
+        cap = cv2.VideoCapture("./data/0001.jpg",cv2.CAP_IMAGES)
+        ret, frame = cap.read()
+        frame_out = frame.copy()
+        gray = object_detector.apply(frame) 
+        _,mask = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        mask_eroded = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        dilated = cv2.dilate(mask_eroded,cv2. getStructuringElement(cv2.MORPH_ELLIPSE, (3,3)),iterations = 2)
+
+        contours,_ = cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE) 
+        min_contour_area = 1000  # Define your minimum area threshold
+        large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) < min_contour_area]
+        
+        center_x_click = []
+        center_y_click = []
+        for cnt in large_contours:
+            x, y, w, h = cv2.boundingRect(cnt)
+            center_x = (x*2 + w)/2
+            center_y = (y*2 + h)/2
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
+            center_x_click.append(center_x)
+            center_y_click.append(center_y)
+
+        return frame #, center_x_click, center_y_click, 
     
 
 
@@ -111,8 +141,9 @@ class Script():
         dilated = cv2.dilate(mask_eroded,cv2. getStructuringElement(cv2.MORPH_ELLIPSE, (3,3)),iterations = 2)
 
         contours,_ = cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE) 
-        min_contour_area = 1000  # Define your minimum area threshold
+        min_contour_area = 500  # Define your minimum area threshold
         large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
+        # large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) < min_contour_area]
         
         center_x_click = []
         center_y_click = []
@@ -141,10 +172,11 @@ class Script():
     def Show_Screen(self):
         object_detector = cv2.createBackgroundSubtractorMOG2() 
         while(True):
-            frame,_ = self.Refresh_and_Process_Name_screen()
+            frame = self.test_screen(object_detector)
             cv2.imshow('frame', frame)
             if cv2.waitKey(1) == ord('q'):
                     break   
+            
     def Defeating_Process(self):
         self.Keyboard_input("space")
         self.Keyboard_input("F1")
