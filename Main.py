@@ -38,11 +38,12 @@ class Script():
             if Moster_selected == False :
                 self.Keyboard_input('F2')
                 self.Keyboard_input('Esc') 
-                _,Character_x_position,Character_y_position = Refresh_and_Process_myself_screen() # check myself
+                _,Character_x_position,Character_y_position = self.Refresh_and_Process_myself_screen() # check myself
                 self.Mouse_Click(Character_x_position,Character_y_position) # check myself
                 frame_out,_,_= self.Refresh_and_Process_screen(object_detector)  # check myself
                 check_if_click = self.If_clickMonster(frame_out,self.template) # check myself
                 if check_if_click == True : # check myself
+                    Moster_selected = True  
                     continue   # check myself
                 for i in range(0,len(x_list)): # Try to click monster
                     self.Mouse_movement(x_list[i],y_list[i])
@@ -119,7 +120,7 @@ class Script():
                         center_x_click = int(text['left'][i] + text['width'][i]/2)
                         center_y_click = int(text['top'][i] + text['height'][i]/2)
             
-        return text_hsv, center_x_click, center_y_click
+        return text_hsv, center_x_click, center_y_click+10
 
     def Refresh_and_Process_Name_screen(self):
         self.Screen_Capture()
