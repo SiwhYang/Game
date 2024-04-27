@@ -1,27 +1,28 @@
 
 import cv2 as cv2
 import numpy as np
-from PIL import ImageGrab
 import time
 from mss import mss
 import pywintypes # // https://stackoverflow.com/questions/3956178/cant-load-pywin32-library-win32gui adding for import dll file to init win32gui
-import win32gui
 import pydirectinput
-import matplotlib.pyplot as plt
 import pytesseract
-
+import argparse
+import warnings
+warnings.filterwarnings("ignore")
 
 class Script():
  
     def __init__(self,name,Monster_name):
         self.Character_name = name
+        self.Character_x_coordinate = None
+        self.Character_y_coordinate = None
         self.Monster_name = Monster_name
         self.template = cv2.imread("./template/template1.jpg")
         return
   
     def Screen_Capture(self):
         with mss() as sct :
-            bounding_box = {'top': 1, 'left': 1, 'width': 1300, 'height': 1000}
+            bounding_box = {'top': 1, 'left': 1, 'width': 18000, 'height': 1000}
             screenshot = np.array(sct.grab(bounding_box))
             cv2.imwrite("./data/0001.jpg",screenshot) 
         # https://stackoverflow.com/questions/54719730/when-taking-many-screenshots-with-mss-memory-fills-quickly-and-crashes-python
@@ -30,7 +31,15 @@ class Script():
 
 
     def Main(self):
+        count = 0
+        print("Initializing...")
         object_detector = cv2.createBackgroundSubtractorMOG2() 
+        result,self.Character_x_coordinate, self.Character_y_coordinate = self.Refresh_and_Process_myself_screen()
+        if result == False :
+            print("Character name error, please check character name is correct and visible !")
+            return
+        print("Character name = '{}' confirmed".format(self.Character_name) )
+        print("Monster name = '{}' confirmed".format( self.Monster_name) )
         Moster_selected = False
         while(True):
             # print(Moster_selected)
@@ -38,13 +47,14 @@ class Script():
             if Moster_selected == False :
                 self.Keyboard_input('F2')
                 self.Keyboard_input('Esc') 
-                _,Character_x_position,Character_y_position = self.Refresh_and_Process_myself_screen() # check myself
-                self.Mouse_Click(Character_x_position,Character_y_position) # check myself
+                # _,Character_x_position,Character_y_position = self.Refresh_and_Process_myself_screen() # check myself
+                self.Mouse_Click( self.Character_x_coordinate,self.Character_y_coordinate) # check myself
                 frame_out,_,_= self.Refresh_and_Process_screen(object_detector)  # check myself
                 check_if_click = self.If_clickMonster(frame_out,self.template) # check myself
                 if check_if_click == True : # check myself
                     Moster_selected = True  
                     continue   # check myself
+                print("Try to find {}".format(self.Monster_name))
                 for i in range(0,len(x_list)): # Try to click monster
                     self.Mouse_movement(x_list[i],y_list[i])
                     time.sleep(0.1)
@@ -56,7 +66,7 @@ class Script():
                         check_if_click = self.If_clickMonster(frame_out,self.template)
                         
                         if check_if_click == True :
-                            print("we ready to change status")
+                            print("we found {} ".format(self.Monster_name))
                             Moster_selected = True  
                             break             
                         else :  
@@ -68,6 +78,7 @@ class Script():
                     # if cv2.waitKey(1) == ord('q'):
                     #     break         
             elif Moster_selected == True: 
+                print("Start killing {} ".format(self.Monster_name))
                 check_if_click = self.If_clickMonster(frame_out,self.template)
                 while (check_if_click) : 
                     frame_out,_,_= self.Refresh_and_Process_screen(object_detector)   
@@ -75,7 +86,10 @@ class Script():
                     check_if_click = self.If_clickMonster(frame_out,self.template)
                     # cv2.imshow('frame', frame_out)           
                 # self.Keyboard_input('F2')
+                print("Defeated {}, looting ".format(self.Monster_name))
                 self.Keyboard_press('space',3)
+                count = count + 1
+                print("We have killed {} {}  ".format(count,self.Monster_name))
                 Moster_selected = False
                 # cv2.imshow('f rame', frame_out)
                 # if cv2.waitKey(1) == ord('q'):
@@ -92,6 +106,7 @@ class Script():
         return string_list
 
     def Refresh_and_Process_myself_screen(self):
+        print("Start checking character's name")
         self.Screen_Capture()
         cap = cv2.VideoCapture("./data/0001.jpg",cv2.CAP_IMAGES)
         ret, frame = cap.read()
@@ -110,17 +125,19 @@ class Script():
         text = pytesseract.image_to_data(text_hsv,lang = 'eng',output_type='dict')
         boxes = len(text['level'])
         Result = False
+        center_x_click = None
+        center_y_click = None
         for i in range(boxes):
-            if text['text'][i] != '':
-                # print(text['left'][i], text['top'][i], text['width'][i], text['height'][i], text['text'][i])        
+            if text['text'][i] != '':      
                 Target_string = self.string_spliter(self.Character_name)
                 for j in range(0,len(Target_string)) : 
                     if Target_string[j] in text['text'][i] :
                         Result = True
                         center_x_click = int(text['left'][i] + text['width'][i]/2)
                         center_y_click = int(text['top'][i] + text['height'][i]/2)
-            
-        return text_hsv, center_x_click, center_y_click+10
+        if center_x_click!=0 and  center_y_click != 0 :
+            return Result, center_x_click, center_y_click+10 #, text_hsv
+        else : return Result, 0 ,0 
 
     def Refresh_and_Process_Name_screen(self):
         self.Screen_Capture()
@@ -135,13 +152,18 @@ class Script():
         pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
         text = pytesseract.image_to_string(text_hsv,lang = 'eng')
         
-        Result = False
-        print(text)
-        if 'sa' in text or 'Bui' in text or 'Ass' in text or 'der' in text or 'Cal' in text:
+        # Result = False
+        # print(text)
+        # if 'sa' in text or 'Bui' in text or 'Ass' in text or 'der' in text or 'Cal' in text:
         # if 'Cali' in text or 'Alpha' in text or 'Pl' in text or 'Hobo' in text:
         # if 'Crystal' in text or 'Ore' in text  :
-            Result = True
-            
+            # Result = True
+        Result = False  
+        Target_string = self.string_spliter(self.Monster_name)
+        for j in range(0,len(Target_string)) : 
+            if Target_string[j] in text :
+                Result = True
+
         return text_hsv,Result
 
     def Refresh_and_Process_screen(self,object_detector):
@@ -156,9 +178,8 @@ class Script():
         dilated = cv2.dilate(mask_eroded,cv2. getStructuringElement(cv2.MORPH_ELLIPSE, (3,3)),iterations = 2)
 
         contours,_ = cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE) 
-        min_contour_area = 500  # Define your minimum area threshold
+        min_contour_area = 700  # Define your minimum area threshold > 500 ABA > 300 Ore
         large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
-        # large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) < min_contour_area]
         
         center_x_click = []
         center_y_click = []
@@ -169,18 +190,6 @@ class Script():
             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
             center_x_click.append(center_x)
             center_y_click.append(center_y)
-        
-
-        # _,text = cv2.threshold(frame_out,100,255,cv2.THRESH_BINARY)
-        # hsv = cv2.cvtColor(text, cv2.COLOR_BGR2HSV)
-        # text_hsv = cv2.inRange(hsv,(0, 254, 254), (1, 255, 255) )
-        # pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-        # text = pytesseract.image_to_string(text_hsv,lang = 'eng')
-        
-        # Result = False
-        # print(text)
-        # if 'sa' in text or 'Bui' in text or 'Ass' in text or 'der' in text:
-        #     Result = True
 
         return frame, center_x_click, center_y_click, 
     
@@ -202,8 +211,7 @@ class Script():
             if m.distance < 0.75*n.distance:
                 good.append([m])
         result = False
-        # print(len(good))
-        threashold = 150
+        threashold = 50
         if len(good) > threashold :
             result = True
         # cv.drawMatchesKnn expects list of lists as matches.
@@ -214,7 +222,7 @@ class Script():
 
             
     def Defeating_Process(self):
-        self.Keyboard_input("space")
+        # self.Keyboard_input("space")
         self.Keyboard_input("F1")
         time.sleep(0.1) 
         # self.Keyboard_input("Esc")
@@ -237,9 +245,12 @@ class Script():
             i = i + 1
 
     def Mouse_Click(self,x,y):
-        x,y = int(x),int(y)
-        pydirectinput.moveTo(x, y)
-        pydirectinput.click()
+        if x == None and y == None:
+            pass
+        else :
+            x,y = int(x),int(y)
+            pydirectinput.moveTo(x, y)
+            pydirectinput.click()
         return 
 
     def Mouse_movement(self,x,y):
@@ -318,9 +329,20 @@ class Script():
 
 
 
+if __name__ == '__main__':
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("arg1")
+    # parser.add_argument("arg2",
+    #                     help="這是第 2 個引數，請輸入整數")
+    # parser.add_argument("arg3",
+    #                     help="這是第 3 個引數，「要求」輸入整數",
+    #                     type=int)
+    # args = parser.parse_args()
+    script = Script("RedDust","Assassin Builder A")
+
+    # script.Show_Screen() 
+    script.Main()
 
 
 
-script = Script("RedDust","Assassin Builder A")
-# script.Show_Screen() 
-script.Main()
+
