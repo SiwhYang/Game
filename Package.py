@@ -57,24 +57,27 @@ class Script():
                     Moster_selected = True  
                     continue   # check myself
                 print("Try to find {}".format(self.Monster_name))
-                for i in range(0,len(x_list)): # Try to click monster
-                    self.Mouse_movement(x_list[i],y_list[i])
-                    time.sleep(0.1)
-                    _,Findtext = self.Refresh_and_Process_Name_screen()
-                    if Findtext == True:
-                        self.Mouse_Click(x_list[i],y_list[i])
-                        self.Mouse_Click(x_list[i],y_list[i])
-                        frame_out,_,_= self.Refresh_and_Process_screen(object_detector)  
-                        check_if_click = self.If_clickMonster(frame_out,self.template)
-                        
-                        if check_if_click == True :
-                            print("We found {} ".format(self.Monster_name))
-                            Moster_selected = True  
-                            break             
+                if len(x_list) < 30 : 
+                    for i in range(0,len(x_list)): # Try to click monster
+                        self.Mouse_movement(x_list[i],y_list[i])
+                        time.sleep(0.1)
+                        _,Findtext = self.Refresh_and_Process_Name_screen()
+                        if Findtext == True:
+                            self.Mouse_Click(x_list[i],y_list[i])
+                            self.Mouse_Click(x_list[i],y_list[i])
+                            frame_out,_,_= self.Refresh_and_Process_screen(object_detector)  
+                            check_if_click = self.If_clickMonster(frame_out,self.template)
+                            
+                            if check_if_click == True :
+                                print("We found {} ".format(self.Monster_name))
+                                Moster_selected = True  
+                                break             
+                            else :  
+                                Moster_selected == False
                         else :  
                             Moster_selected == False
-                    else :  
-                        Moster_selected == False
+                else : 
+                    print("Wait for the screen to stabilize")
 
                     # cv2.imshow('frame', frame_out)  
                     # if cv2.waitKey(1) == ord('q'):
@@ -89,7 +92,7 @@ class Script():
                     # cv2.imshow('frame', frame_out)           
                 # self.Keyboard_input('F2')
                 print("Defeated {}, looting ".format(self.Monster_name))
-                self.Keyboard_press('space',3)
+                self.Keyboard_press('space',5)
                 count = count + 1
                 print("We have killed {} {}  ".format(count,self.Monster_name))
                 Moster_selected = False
@@ -236,7 +239,7 @@ class Script():
             
     def Defeating_Process(self):
         if self.Use_Normal_attack == "1" :
-            print(self.Use_Normal_attack)
+            # print(self.Use_Normal_attack)
             self.Keyboard_input("space")
         self.Keyboard_input("F1")
         time.sleep(0.1) 
@@ -250,15 +253,10 @@ class Script():
         return 
     
     def Keyboard_press (self, keyboard, second):
-        interval = 0.1
-        second = 1
-        loop_count = int(second/interval)
-        for i in range (0,loop_count):
-            pydirectinput. press(keyboard)
-            time.sleep(interval)
-            pydirectinput.keyUp(keyboard)
-            i = i + 1
-
+        pydirectinput. press(keyboard)
+        time.sleep(second)
+        pydirectinput.keyUp(keyboard)
+        
     def Mouse_Click(self,x,y):
         if x == None and y == None:
             pass
