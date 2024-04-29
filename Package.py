@@ -92,7 +92,7 @@ class Script():
                     # cv2.imshow('frame', frame_out)           
                 # self.Keyboard_input('F2')
                 print("Defeated {}, looting ".format(self.Monster_name))
-                self.Keyboard_press('space',5)
+                self.Keyboard_press('space',3)
                 count = count + 1
                 print("We have killed {} {}  ".format(count,self.Monster_name))
                 Moster_selected = False
@@ -253,10 +253,14 @@ class Script():
         return 
     
     def Keyboard_press (self, keyboard, second):
-        pydirectinput. press(keyboard)
-        time.sleep(second)
-        pydirectinput.keyUp(keyboard)
-        
+        count_time = 0
+        intervel = 0.5
+        while (count_time < second):
+            pydirectinput.press(keyboard)
+            time.sleep(intervel)
+            pydirectinput.keyUp(keyboard)
+            count_time = count_time + intervel
+
     def Mouse_Click(self,x,y):
         if x == None and y == None:
             pass
@@ -271,10 +275,6 @@ class Script():
         pydirectinput.moveTo(x, y)
         # pydirectinput.click()
         return 
-
-    
-
-
 
     def test_screen(self,object_detector):
         self.Screen_Capture()
