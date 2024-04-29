@@ -12,11 +12,13 @@ warnings.filterwarnings("ignore")
 
 class Script():
  
-    def __init__(self,name,Monster_name):
+    def __init__(self,name,Monster_name,Monster_name_color, Use_Normal_attack ):
         self.Character_name = name
         self.Character_x_coordinate = None
         self.Character_y_coordinate = None
         self.Monster_name = Monster_name
+        self.Monster_name_color = Monster_name_color
+        self.Use_Normal_attack = Use_Normal_attack
         self.template = cv2.imread("./template/template1.jpg")
         return
   
@@ -149,9 +151,16 @@ class Script():
         frame_out = frame.copy()
         
         hsv = cv2.cvtColor(frame_out, cv2.COLOR_BGR2HSV)
-        lower = np.array([155,25,100])
-        upper = np.array([343,255,255])
-        text_hsv = cv2.inRange(hsv,lower, upper )
+        if self.Monster_name_color == "Red" :
+            lower = np.array([155,25,100])
+            upper = np.array([343,255,255])
+            text_hsv = cv2.inRange(hsv,lower, upper )
+        
+        elif self.Monster_name_color != "Red" :
+            lower = np.array([(0,0,70)])
+            upper = np.array([(180,30,200)])
+            text_hsv = cv2.inRange(hsv,lower, upper )
+
         # pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
         pytesseract.pytesseract.tesseract_cmd = '.\Tesseract-OCR\\tesseract.exe'
         text = pytesseract.image_to_string(text_hsv,lang = 'eng')
@@ -182,7 +191,7 @@ class Script():
         dilated = cv2.dilate(mask_eroded,cv2. getStructuringElement(cv2.MORPH_ELLIPSE, (3,3)),iterations = 2)
 
         contours,_ = cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE) 
-        min_contour_area = 300  # Define your minimum area threshold > 500 ABA > 300 Ore
+        min_contour_area = 500  # Define your minimum area threshold > 500 ABA > 300 Ore
         large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
         
         center_x_click = []
@@ -226,7 +235,9 @@ class Script():
 
             
     def Defeating_Process(self):
-        # self.Keyboard_input("space")
+        if self.Use_Normal_attack == "1" :
+            print(self.Use_Normal_attack)
+            self.Keyboard_input("space")
         self.Keyboard_input("F1")
         time.sleep(0.1) 
         # self.Keyboard_input("Esc")
@@ -297,10 +308,10 @@ class Script():
 if __name__ == '__main__':
     name_split = sys.argv[2].split("_")
     monster_name = ' '.join (name_split)
-    script = Script(sys.argv[1],monster_name)
+    script = Script(sys.argv[1],monster_name,sys.argv[3],sys.argv[4])
     script.Main()
 
     # script = Script("RedDust","Assassin Builder A") # Assassin_Builder_A
     # script.Show_Screen()
-
+    # script.Main()
 
