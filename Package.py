@@ -8,7 +8,20 @@ import pydirectinput
 import pytesseract
 import sys
 import warnings
+import threading 
+from pynput import keyboard
+import win32api
+import win32con
 warnings.filterwarnings("ignore")
+
+Lincense_Text = "\nCopyright (c) 2024 Meow Guild. All Right Reserved.\nThis software may not be copied, \
+transmitted, provided or modified \n\
+without permission of members of Meow guild.\n"
+
+Program_controller = True
+Process_controller = True
+
+
 
 class Script():
  
@@ -19,86 +32,102 @@ class Script():
         self.Monster_name = Monster_name
         self.Monster_name_color = Monster_name_color
         self.Use_Normal_attack = Use_Normal_attack
+        screen_x = None
+        screen_y = None
+        screen_roi_left = None
+        screen_roi_width = None
+        screen_roi_top = None
+        screen_roi_height = None
+        self.screen_spliter()
         self.template = cv2.imread("./template/template1.jpg")
         return
   
     def Screen_Capture(self):
+        
         with mss() as sct :
-            bounding_box = {'top': 1, 'left': 1, 'width': 1300, 'height': 1000}
+            bounding_box = {'top': 1, 'left': 1, 'width': self.screen_x , 'height': self.screen_y}
             screenshot = np.array(sct.grab(bounding_box))
-            cv2.imwrite("./data/0001.jpg",screenshot) 
+            mask = np.zeros(screenshot.shape,np.uint8)
+            mask[self.screen_roi_top:self.screen_roi_height,self.screen_roi_left:self.screen_roi_width] = screenshot[self.screen_roi_top:self.screen_roi_height,self.screen_roi_left:self.screen_roi_width]
+            cv2.imwrite("./data/0001.jpg",mask) 
         # https://stackoverflow.com/questions/54719730/when-taking-many-screenshots-with-mss-memory-fills-quickly-and-crashes-python
         # context manager
         return
 
 
     def Main(self):
+        print(Lincense_Text)
         count = 0
+        global Program_controller
+        global Process_controller
         print("Initializing...")
         object_detector = cv2.createBackgroundSubtractorMOG2() 
         result,self.Character_x_coordinate, self.Character_y_coordinate = self.Refresh_and_Process_myself_screen()
         if result == False :
+            Program_controller = False
             print("Character name error, please check character name is correct and visible !")
+            print("Press 'p' to stop")
             return
         print("Character name = '{}' confirmed".format(self.Character_name) )
         print("Monster name = '{}' confirmed".format( self.Monster_name) )
         Moster_selected = False
-        while(True):
-            # print(Moster_selected)
-            frame_out,x_list,y_list = self.Refresh_and_Process_screen(object_detector)  
-            if Moster_selected == False :
-                self.Keyboard_input('F2')
-                self.Keyboard_input('Esc') 
-                # _,Character_x_position,Character_y_position = self.Refresh_and_Process_myself_screen() # check myself
-                self.Mouse_Click( self.Character_x_coordinate,self.Character_y_coordinate) # check myself
-                frame_out,_,_= self.Refresh_and_Process_screen(object_detector)  # check myself
-                check_if_click = self.If_clickMonster(frame_out,self.template) # check myself
-                if check_if_click == True : # check myself
-                    Moster_selected = True  
-                    continue   # check myself
-                print("Try to find {}".format(self.Monster_name))
-                if len(x_list) < 30 : 
-                    for i in range(0,len(x_list)): # Try to click monster
-                        self.Mouse_movement(x_list[i],y_list[i])
-                        time.sleep(0.1)
-                        _,Findtext = self.Refresh_and_Process_Name_screen()
-                        if Findtext == True:
-                            self.Mouse_Click(x_list[i],y_list[i])
-                            self.Mouse_Click(x_list[i],y_list[i])
-                            frame_out,_,_= self.Refresh_and_Process_screen(object_detector)  
-                            check_if_click = self.If_clickMonster(frame_out,self.template)
-                            
-                            if check_if_click == True :
-                                print("We found {} ".format(self.Monster_name))
-                                Moster_selected = True  
-                                break             
+        while(Program_controller):
+            if (Process_controller) :
+                # print(Moster_selected)
+                frame_out,x_list,y_list = self.Refresh_and_Process_screen(object_detector)  
+                if Moster_selected == False :
+                    self.Keyboard_input('F2')
+                    self.Keyboard_input('Esc') 
+                    # _,Character_x_position,Character_y_position = self.Refresh_and_Process_myself_screen() # check myself
+                    self.Mouse_Click( self.Character_x_coordinate,self.Character_y_coordinate) # check myself
+                    frame_out,_,_= self.Refresh_and_Process_screen(object_detector)  # check myself
+                    check_if_click = self.If_clickMonster(frame_out,self.template) # check myself
+                    if check_if_click == True : # check myself
+                        Moster_selected = True  
+                        continue   # check myself
+                    print("Try to find {}".format(self.Monster_name))
+                    if len(x_list) < 30 : 
+                        for i in range(0,len(x_list)): # Try to click monster
+                            self.Mouse_movement(x_list[i],y_list[i])
+                            time.sleep(0.1)
+                            _,Findtext = self.Refresh_and_Process_Name_screen()
+                            if Findtext == True:
+                                self.Mouse_Click(x_list[i],y_list[i])
+                                self.Mouse_Click(x_list[i],y_list[i])
+                                frame_out,_,_= self.Refresh_and_Process_screen(object_detector)  
+                                check_if_click = self.If_clickMonster(frame_out,self.template)
+                                
+                                if check_if_click == True :
+                                    print("We found {} ".format(self.Monster_name))
+                                    Moster_selected = True  
+                                    break             
+                                else :  
+                                    Moster_selected == False
                             else :  
                                 Moster_selected == False
-                        else :  
-                            Moster_selected == False
-                else : 
-                    print("Wait for the screen to stabilize")
+                    else : 
+                        print("Wait for the screen to stabilize")
 
-                    # cv2.imshow('frame', frame_out)  
-                    # if cv2.waitKey(1) == ord('q'):
-                    #     break         
-            elif Moster_selected == True: 
-                print("Start killing {} ".format(self.Monster_name))
-                check_if_click = self.If_clickMonster(frame_out,self.template)
-                while (check_if_click) : 
-                    frame_out,_,_= self.Refresh_and_Process_screen(object_detector)   
-                    self.Defeating_Process()
+                        # cv2.imshow('frame', frame_out)  
+                        # if cv2.waitKey(1) == ord('q'):
+                        #     break         
+                elif Moster_selected == True: 
+                    print("Start killing {} ".format(self.Monster_name))
                     check_if_click = self.If_clickMonster(frame_out,self.template)
-                    # cv2.imshow('frame', frame_out)           
-                # self.Keyboard_input('F2')
-                print("Defeated {}, looting ".format(self.Monster_name))
-                self.Keyboard_press('space',3)
-                count = count + 1
-                print("We have killed {} {}  ".format(count,self.Monster_name))
-                Moster_selected = False
-                # cv2.imshow('f rame', frame_out)
-                # if cv2.waitKey(1) == ord('q'):
-                #         break                    
+                    while (check_if_click) : 
+                        frame_out,_,_= self.Refresh_and_Process_screen(object_detector)   
+                        self.Defeating_Process()
+                        check_if_click = self.If_clickMonster(frame_out,self.template)
+                        # cv2.imshow('frame', frame_out)           
+                    # self.Keyboard_input('F2')
+                    print("Defeated {}, looting ".format(self.Monster_name))
+                    self.Keyboard_press('space',3)
+                    count = count + 1
+                    print("We have killed {} {}  ".format(count,self.Monster_name))
+                    Moster_selected = False
+                    # cv2.imshow('f rame', frame_out)
+                    # if cv2.waitKey(1) == ord('q'):
+                    #         break                    
 
     def string_spliter(self,string):
         string_list = []
@@ -109,6 +138,20 @@ class Script():
         string_list.append(middle)
         string_list.append(right)
         return string_list
+
+
+    def screen_spliter(self):
+        screen_width = win32api.GetSystemMetrics(0)
+        screen_length = win32api.GetSystemMetrics(1)
+        screen_roi_x = screen_width 
+        screen_roi_y = screen_length
+        self.screen_x = screen_roi_x
+        self.screen_y = screen_roi_y
+        cut_ratio = 0.24
+        self.screen_roi_left = int(screen_roi_x * cut_ratio)
+        self.screen_roi_width = screen_width
+        self.screen_roi_top = 1
+        self.screen_roi_height = screen_roi_y - 10
 
     def Refresh_and_Process_myself_screen(self):
         print("Start checking character's name")
@@ -290,7 +333,7 @@ class Script():
         lower = np.array([fixHSVRange(150,10,50)])
         upper = np.array([fixHSVRange(170,180,100)])
         text_hsv = cv2.inRange(hsv,lower, upper )
-        return text_hsv #, center_x_click, center_y_click, 
+        return frame_out #, center_x_click, center_y_click, 
     
 
     def Show_Screen(self):
@@ -301,15 +344,41 @@ class Script():
             if cv2.waitKey(1) == ord('q'):
                     break   
 
-
+class Keystrokes_Monitor () :
+    def on_release(self,key):
+        global Program_controller
+        global Process_controller
+        if Process_controller == True :
+            if key == keyboard.KeyCode.from_char('p') :
+                print("Pause ! press 'o' to cloase program, press 's' to restart. ")
+                Process_controller = False
+        if Process_controller == False :
+            if key == keyboard.KeyCode.from_char('s') :
+                print("Restart ! press 'p' to pause. ")
+                Process_controller = True
+            if key == keyboard.KeyCode.from_char('o') :
+                # Stop listener
+                Program_controller = False
+                return False
+            
 
 if __name__ == '__main__':
-    name_split = sys.argv[2].split("_")
-    monster_name = ' '.join (name_split)
-    script = Script(sys.argv[1],monster_name,sys.argv[3],sys.argv[4])
-    script.Main()
+    # # name_split = sys.argv[2].split("_")
+    # # monster_name = ' '.join (name_split)
+    # # script = Script(sys.argv[1],monster_name,sys.argv[3],sys.argv[4])
+    # # script.Main()
 
-    # script = Script("RedDust","Assassin Builder A") # Assassin_Builder_A
-    # script.Show_Screen()
+    # script = Script("RedDust","Assassin Builder A", "Red", 1) # Assassin_Builder_A
+    # # script.Show_Screen()
     # script.Main()
 
+    name_split = sys.argv[2].split("_")
+    monster_name = ' '.join (name_split)
+    Main_Process = Script(sys.argv[1],monster_name,sys.argv[3],sys.argv[4])
+    # Main_Process = Script("RedDust","Assassin Builder A", "Red", 1) # Assassin_Builder_A
+    Keystrokes_Monitor = Keystrokes_Monitor()
+    Main_Process_thread = threading.Thread( target=Main_Process.Main)
+# Collect events until released
+    with keyboard.Listener(on_release=Keystrokes_Monitor.on_release) as Keystrokes_Monitor_thread:
+        Main_Process_thread.start()
+        Keystrokes_Monitor_thread.join()
