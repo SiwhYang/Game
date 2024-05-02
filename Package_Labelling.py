@@ -88,18 +88,17 @@ class Script():
                         Moster_selected = True  
                         continue   # check myself
                     print("Try to find {}".format(self.Monster_name))
-                    if len(x_list) < 30 : 
+                    if len(x_list) < 20 : 
                         for i in range(0,len(x_list)): # Try to click monster
                             self.Mouse_movement(x_list[i],y_list[i])
                             time.sleep(0.1)
                             _,Findtext = self.Refresh_and_Process_Name_screen()
                             if Findtext == True:
-                                Yolo_Labelling (frame_out,x_list[i],y_list[i],x_size,y_size)
+                                self.Yolo_Labelling (frame_out,x_list[i],y_list[i],x_size[i],y_size[i])
                                 self.Mouse_Click(x_list[i],y_list[i])
                                 self.Mouse_Click(x_list[i],y_list[i])
                                 frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)  
                                 check_if_click = self.If_clickMonster(frame_out,self.template)
-                                
                                 if check_if_click == True :
                                     print("We found {} ".format(self.Monster_name))
                                     Moster_selected = True  
@@ -178,26 +177,26 @@ class Script():
         
         # timestamp
         now = datetime.now()
-        dt_string = now.strftime("%d/%m/%Y-%H:%M:%S")
+        dt_string = now.strftime("%d%m%Y%H%M%S")
         # print("date and time =", dt_string)
         
         # // output 1. image  
         frame_roi = frame.copy()
-        cv2.imwrite(frame,'./{}/{}.jpg'.format(self.Monster_name,dt_string))
+        cv2.imwrite("./Yolo/{}/{}.jpg".format(self.Monster_name,dt_string),frame)
         # //2. image with roi drawing (checking)
         x = int((2*C_x-Size_x)/2)
         y = int((2*C_y-Size_y)/2)
         w = Size_x
         h = Size_y
         cv2.rectangle(frame_roi, (x, y), (x+w, y+h), (0, 0, 200), 3)
-        cv2.imwrite(frame_roi,'./{}/{}-roi.jpg'.format(self.Monster_name,dt_string))
+        cv2.imwrite("./Yolo/{}/{}-roi.jpg".format(self.Monster_name,dt_string),frame_roi)
         # // 3. yolo.txt format (roi coordinate)
         C_x_ratio = C_x/self.screen_x
         C_y_ratio = C_y/self.screen_y
         Size_x_ratio = Size_x/self.screen_x
         Size_y_ratio = Size_y/self.screen_y
         write_line = "{} {} {} {} {}".format(count_lines,C_x_ratio,C_y_ratio,Size_x_ratio,Size_y_ratio)
-        with open("./{}/{}-roi.txt".format(self.Monster_name,dt_string),"a") as f :
+        with open("./Yolo/{}/{}.txt".format(self.Monster_name,dt_string),"a") as f :
             f.writelines(write_line +'\n')
         
         return 
@@ -289,9 +288,10 @@ class Script():
         dilated = cv2.dilate(mask_eroded,cv2. getStructuringElement(cv2.MORPH_ELLIPSE, (3,3)),iterations = 2)
 
         contours,_ = cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE) 
-        min_contour_area = 500  # Define your minimum area threshold > 500 ABA > 300 Ore
+        min_contour_area = 300  # Define your minimum area threshold > 500 ABA > 300 Ore
+        # max_contour_area = 1000
         large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
-        
+        # large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) < max_contour_area]
         center_x_click = []
         center_y_click = []
         Size_x_roi = []
@@ -301,8 +301,8 @@ class Script():
             center_x = (x*2 + w)/2
             center_y = (y*2 + h)/2
             # cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
-            Size_x_roi,append(w)
-            Size_y_roi.append(y)
+            Size_x_roi.append(w)
+            Size_y_roi.append(h)
             center_x_click.append(center_x)
             center_y_click.append(center_y)
 
@@ -380,20 +380,35 @@ class Script():
         cap = cv2.VideoCapture("./data/0001.jpg",cv2.CAP_IMAGES)
         ret, frame = cap.read()
         frame_out = frame.copy()
-        hsv = cv2.cvtColor(frame_out, cv2.COLOR_BGR2HSV)
-        def fixHSVRange(h, s, v):
-            # Normal H,S,V: (0-360,0-100%,0-100%)
-            # OpenCV H,S,V: (0-180,0-255 ,0-255)
-            return (180 * h / 360, 255 * s / 100, 255 * v / 100)
-        
-        lower = np.array([fixHSVRange(150,10,50)])
-        upper = np.array([fixHSVRange(170,180,100)])
-        text_hsv = cv2.inRange(hsv,lower, upper )
-        return frame_out #, center_x_click, center_y_click, 
+        gray = object_detector.apply(frame) 
+        _,mask = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        mask_eroded = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        dilated = cv2.dilate(mask_eroded,cv2. getStructuringElement(cv2.MORPH_ELLIPSE, (3,3)),iterations = 2)
+
+        contours,_ = cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE) 
+        min_contour_area = 100  # Define your minimum area threshold > 500 ABA > 300 Ore
+        max_contour_area = 800
+        large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
+        large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) < max_contour_area]
+        center_x_click = []
+        center_y_click = []
+        Size_x_roi = []
+        Size_y_roi = []
+        for cnt in large_contours:
+            x, y, w, h = cv2.boundingRect(cnt)
+            center_x = (x*2 + w)/2
+            center_y = (y*2 + h)/2
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
+            Size_x_roi.append(w)
+            Size_y_roi.append(y)
+            center_x_click.append(center_x)
+            center_y_click.append(center_y)
+        return frame 
     
 
     def Show_Screen(self):
-        object_detector = cv2.createBackgroundSubtractorMOG2() 
+        object_detector = cv2.createBackgroundSubtractorMOG2(varThreshold = 10, detectShadows = False) 
         while(True):
             frame = self.test_screen(object_detector)
             cv2.imshow('frame', frame)
@@ -421,7 +436,7 @@ class Keystrokes_Monitor () :
 if __name__ == '__main__':
    
     # script = Script("RedDust","Assassin Builder A", "Red", 1) # Assassin_Builder_A
-    # # script.Show_Screen()
+    # script.Show_Screen()
     # script.Yolo_Labelling(1,1,1,1,1)
 
    
