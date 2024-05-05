@@ -14,6 +14,10 @@ from pynput import keyboard
 import win32api
 import win32con
 import os
+import detect_api
+import torch
+from PIL import Image
+
 warnings.filterwarnings("ignore")
 
 Lincense_Text = "\nCopyright (c) 2024 Siwh of Meow Guild. All Right Reserved.\nThis software may not be copied, \
@@ -43,9 +47,21 @@ class Script():
         self.screen_spliter()
         self.template = cv2.imread("./template/template1.jpg")
         return
-  
-    def Screen_Capture(self):
-        
+    
+    def Screen_Capture_return(self):
+        with mss() as sct :
+            bounding_box = {'top': 1, 'left': 1, 'width': self.screen_x , 'height': self.screen_y}
+            screenshot = sct.grab(bounding_box)
+            img = Image.frombytes('RGB', screenshot.size, screenshot.bgra, 'raw', 'BGRX')
+            arr = np.array(img)
+            screenshot = cv2.cvtColor(arr, cv2.COLOR_BGRA2RGB)
+            
+            mask = np.zeros(screenshot.shape,np.uint8)
+            mask[self.screen_roi_top:self.screen_roi_height,self.screen_roi_left:self.screen_roi_width] = screenshot[self.screen_roi_top:self.screen_roi_height,self.screen_roi_left:self.screen_roi_width]
+            
+        return mask
+    
+    def Screen_Capture(self):    
         with mss() as sct :
             bounding_box = {'top': 1, 'left': 1, 'width': self.screen_x , 'height': self.screen_y}
             screenshot = np.array(sct.grab(bounding_box))
@@ -149,7 +165,8 @@ class Script():
         screen_roi_y = screen_length
         self.screen_x = screen_roi_x
         self.screen_y = screen_roi_y
-        cut_ratio = 0.24
+        # cut_ratio = 0.24
+        cut_ratio = 0
         self.screen_roi_left = int(screen_roi_x * cut_ratio)
         self.screen_roi_width = screen_width
         self.screen_roi_top = 1
@@ -367,33 +384,29 @@ class Script():
         # pydirectinput.click()
         return 
 
-    def test_screen(self,object_detector):
-        self.Screen_Capture()
-        cap = cv2.VideoCapture("./data/0001.jpg",cv2.CAP_IMAGES)
-        ret, frame = cap.read()
-        frame_out = frame.copy()
-        hsv = cv2.cvtColor(frame_out, cv2.COLOR_BGR2HSV)
-        def fixHSVRange(h, s, v):
-            # Normal H,S,V: (0-360,0-100%,0-100%)
-            # OpenCV H,S,V: (0-180,0-255 ,0-255)
-            return (180 * h / 360, 255 * s / 100, 255 * v / 100)
+    def test_screen(self):
         
-        # lower = np.array([fixHSVRange(150,40,50)])
-        # upper = np.array([fixHSVRange(170,100,100)])
-        lower = np.array([fixHSVRange(140,0,0)])
-        upper = np.array([fixHSVRange(160,100,100)])
-        text_hsv = cv2.inRange(hsv,lower, upper )
-
-        # pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-        pytesseract.pytesseract.tesseract_cmd = '.\Tesseract-OCR\\tesseract.exe'
-        text = pytesseract.image_to_data(text_hsv,lang = 'eng',output_type='dict')
-        return text_hsv 
+        a = detect_api.detectapi(weights="D:/Project/yolov7/runs/train/exp11/weights/best.pt",img_size=416)
+        with torch.no_grad():
+            while(True):
+                # self.Screen_Capture()    
+                # cap = cv2.imread("./data/0001.jpg")
+                cap = self.Screen_Capture_return()
+                result,names = a.detect([cap])
+                img = result[0][0]
+                for cls,(x1,y1,x2,y2),conf in result[0][1]:
+                    print(names[cls],x1,y1,x2,y2,conf)
+                    cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0))
+                    cv2.putText(img,names[cls],(x1,y1-30),cv2.FONT_HERSHEY_DUPLEX,2,(255,0,0),thickness=2)
+                cv2.imshow('video',img)
+                if cv2.waitKey(1) == ord('q'):
+                    break   
+        return img 
     
 
     def Show_Screen(self):
-        object_detector = cv2.createBackgroundSubtractorMOG2(varThreshold = 10, detectShadows = False) 
         while(True):
-            frame = self.test_screen(object_detector)
+            frame = self.test_screen()
             cv2.imshow('frame', frame)
             if cv2.waitKey(1) == ord('q'):
                     break   
@@ -418,18 +431,18 @@ class Keystrokes_Monitor () :
 
 if __name__ == '__main__':
    
-    # script = Script("WorkingFarmer","Assassin Builder A", "GRay", 1) # Assassin_Builder_A
-    # script.Show_Screen()
+    script = Script("WorkingFarmer","Assassin Builder A", "GRay", 1) # Assassin_Builder_A
+    script.test_screen()
     # script.Yolo_Labelling(1,1,1,1,1)
 
    
-    name_split = sys.argv[2].split("_")
-    monster_name = ' '.join (name_split)
-    Main_Process = Script(sys.argv[1],monster_name,sys.argv[3],sys.argv[4])
-    # Main_Process = Script("RedDust","Assassin Builder A", "Red", 1) # Assassin_Builder_A
-    Keystrokes_Monitor = Keystrokes_Monitor()
-    Main_Process_thread = threading.Thread( target=Main_Process.Main)
-# Collect events until released
-    with keyboard.Listener(on_release=Keystrokes_Monitor.on_release) as Keystrokes_Monitor_thread:
-        Main_Process_thread.start()
-        Keystrokes_Monitor_thread.join()
+#     name_split = sys.argv[2].split("_")
+#     monster_name = ' '.join (name_split)
+#     Main_Process = Script(sys.argv[1],monster_name,sys.argv[3],sys.argv[4])
+#     # Main_Process = Script("RedDust","Assassin Builder A", "Red", 1) # Assassin_Builder_A
+#     Keystrokes_Monitor = Keystrokes_Monitor()
+#     Main_Process_thread = threading.Thread( target=Main_Process.Main)
+# # Collect events until released
+#     with keyboard.Listener(on_release=Keystrokes_Monitor.on_release) as Keystrokes_Monitor_thread:
+#         Main_Process_thread.start()
+#         Keystrokes_Monitor_thread.join()

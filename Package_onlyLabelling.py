@@ -81,7 +81,7 @@ class Script():
                     self.Keyboard_input('F2')
                     self.Keyboard_input('Esc') 
                     # _,Character_x_position,Character_y_position = self.Refresh_and_Process_myself_screen() # check myself
-                    self.Mouse_Click( self.Character_x_coordinate,self.Character_y_coordinate) # check myself
+                    # self.Mouse_Click( self.Character_x_coordinate,self.Character_y_coordinate) # check myself
                     frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)  # check myself
                     check_if_click = self.If_clickMonster(frame_out,self.template) # check myself
                     if check_if_click == True : # check myself
@@ -95,16 +95,16 @@ class Script():
                             _,Findtext = self.Refresh_and_Process_Name_screen()
                             if Findtext == True:
                                 self.Yolo_Labelling (frame_out,x_list[i],y_list[i],x_size[i],y_size[i])
-                                self.Mouse_Click(x_list[i],y_list[i])
-                                self.Mouse_Click(x_list[i],y_list[i])
-                                frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)  
-                                check_if_click = self.If_clickMonster(frame_out,self.template)
-                                if check_if_click == True :
-                                    print("We found {} ".format(self.Monster_name))
-                                    Moster_selected = True  
-                                    break             
-                                else :  
-                                    Moster_selected == False
+                #                 self.Mouse_Click(x_list[i],y_list[i])
+                #                 self.Mouse_Click(x_list[i],y_list[i])
+                #                 frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)  
+                #                 check_if_click = self.If_clickMonster(frame_out,self.template)
+                #                 if check_if_click == True :
+                #                     print("We found {} ".format(self.Monster_name))
+                #                     Moster_selected = True  
+                #                     break             
+                #                 else :  
+                #                     Moster_selected == False
                             else :  
                                 Moster_selected == False
                     else : 
@@ -127,9 +127,9 @@ class Script():
                     count = count + 1
                     print("We have killed {} {}  ".format(count,self.Monster_name))
                     Moster_selected = False
-                    # cv2.imshow('f rame', frame_out)
-                    # if cv2.waitKey(1) == ord('q'):
-                    #         break                    
+                    cv2.imshow('f rame', frame_out)
+                    if cv2.waitKey(1) == ord('q'):
+                            break                    
 
     def string_spliter(self,string):
         string_list = []
