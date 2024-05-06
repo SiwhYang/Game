@@ -64,12 +64,12 @@ class Script():
         global Process_controller
         print("Initializing...")
         object_detector = cv2.createBackgroundSubtractorMOG2() 
-        result,self.Character_x_coordinate, self.Character_y_coordinate = self.Refresh_and_Process_myself_screen()
-        if result == False :
-            Program_controller = False
-            print("Character name error, please check character name is correct and visible !")
-            print("Press 'p' to stop")
-            return
+        # result,self.Character_x_coordinate, self.Character_y_coordinate = self.Refresh_and_Process_myself_screen()
+        # if result == False :
+        #     Program_controller = False
+        #     print("Character name error, please check character name is correct and visible !")
+        #     print("Press 'p' to stop")
+        #     return
         print("Character name = '{}' confirmed".format(self.Character_name) )
         print("Monster name = '{}' confirmed".format( self.Monster_name) )
         Moster_selected = False
@@ -277,7 +277,7 @@ class Script():
         _,mask = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
         mask_eroded = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-        dilated = cv2.dilate(mask_eroded,cv2. getStructuringElement(cv2.MORPH_ELLIPSE, (10,10)),iterations = 2)
+        dilated = cv2.dilate(mask_eroded,cv2. getStructuringElement(cv2.MORPH_ELLIPSE, (14,14)),iterations = 2)
 
         contours,_ = cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE) 
         min_contour_area = 100  # Define your minimum area threshold > 500 ABA > 300 Ore
