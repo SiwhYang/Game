@@ -94,7 +94,7 @@ class Script():
                             time.sleep(0.1)
                             _,Findtext = self.Refresh_and_Process_Name_screen()
                             if Findtext == True:
-                                self.Yolo_Labelling (frame_out,x_list[i],y_list[i],x_size[i],y_size[i])
+                                # self.Yolo_Labelling (frame_out,x_list[i],y_list[i],x_size[i],y_size[i])
                                 self.Mouse_Click(x_list[i],y_list[i])
                                 self.Mouse_Click(x_list[i],y_list[i])
                                 frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)  
@@ -318,7 +318,7 @@ class Script():
             if m.distance < 0.75*n.distance:
                 good.append([m])
         result = False
-        threashold = 50
+        threashold = 70
         if len(good) > threashold :
             result = True
         # cv.drawMatchesKnn expects list of lists as matches.

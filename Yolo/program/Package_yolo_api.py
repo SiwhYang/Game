@@ -88,7 +88,7 @@ class Script():
         print("Character name = '{}' confirmed".format(self.Character_name) )
         print("Monster name = '{}' confirmed".format( self.Monster_name) )
         print("Initializing...")
-        self.detector = detect_api.detectapi(weights="D:/Project/yolov7/runs/train/exp11/weights/best.pt",img_size=416)
+        self.detector = detect_api.detectapi(weights="./weights/ABA_0.15.pt",img_size=416)
         Moster_selected = False
         while(Program_controller):
             if (Process_controller) :
@@ -171,7 +171,7 @@ class Script():
         self.screen_roi_left = int(screen_roi_x * cut_ratio)
         self.screen_roi_width = screen_width
         self.screen_roi_top = 1
-        self.screen_roi_height = screen_roi_y - 10
+        self.screen_roi_height = screen_roi_y - 30
 
     def Yolo_Labelling (self,frame,C_x,C_y,Size_x,Size_y):
         name = self.Monster_name
@@ -235,8 +235,7 @@ class Script():
             # OpenCV H,S,V: (0-180,0-255 ,0-255)
             return (180 * h / 360, 255 * s / 100, 255 * v / 100)
         
-        # lower = np.array([fixHSVRange(150,40,50)])
-        # upper = np.array([fixHSVRange(170,100,100)])
+       
         lower = np.array([fixHSVRange(140,10,0)])
         upper = np.array([fixHSVRange(160,100,100)])
         text_hsv = cv2.inRange(hsv,lower, upper )
@@ -297,7 +296,7 @@ class Script():
             center_y_click = []
             for cls,(x1,y1,x2,y2),conf in result[0][1]:
                 print(names[cls],x1,y1,x2,y2,conf)
-                # cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0))
+                cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0))
                 center_x = (x1+x2)/2
                 center_y = (y1+y2)/2
                 center_x_click.append(center_x)
@@ -323,7 +322,7 @@ class Script():
             if m.distance < 0.75*n.distance:
                 good.append([m])
         result = False
-        threashold = 50
+        threashold = 70
         if len(good) > threashold :
             result = True
         # cv.drawMatchesKnn expects list of lists as matches.
@@ -333,6 +332,7 @@ class Script():
         return result
 
             
+
     def Defeating_Process(self):
         if self.Use_Normal_attack == "1" :
             # print(self.Use_Normal_attack)
@@ -374,7 +374,7 @@ class Script():
 
     def test_screen(self):
         
-        a = detect_api.detectapi(weights="D:/Project/yolov7/runs/train/exp11/weights/best.pt",img_size=416)
+        a = detect_api.detectapi(weights="./weights/ABA_0.15.pt",img_size=416)
         with torch.no_grad():
             while(True):
                 # self.Screen_Capture()    
