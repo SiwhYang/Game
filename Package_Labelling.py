@@ -14,6 +14,8 @@ from pynput import keyboard
 import win32api
 import win32con
 import os
+from argparse import ArgumentParser
+import textwrap
 warnings.filterwarnings("ignore")
 
 Lincense_Text = "\nCopyright (c) 2024 Siwh of Meow Guild. All Right Reserved.\nThis software may not be copied, \
@@ -29,9 +31,11 @@ class Script():
  
     def __init__(self,name,Monster_name,Monster_name_color, Use_Normal_attack ):
         self.Character_name = name
+        self.Character_name_list = None
         self.Character_x_coordinate = None
         self.Character_y_coordinate = None
         self.Monster_name = Monster_name
+        self.Monster_name_list = None
         self.Monster_name_color = Monster_name_color
         self.Use_Normal_attack = Use_Normal_attack
         screen_x = None
@@ -41,6 +45,7 @@ class Script():
         screen_roi_top = None
         screen_roi_height = None
         self.screen_spliter()
+        self.string_spliter()
         self.template = cv2.imread("./template/template1.jpg")
         return
   
@@ -96,7 +101,8 @@ class Script():
                             if Findtext == True:
                                 # self.Yolo_Labelling (frame_out,x_list[i],y_list[i],x_size[i],y_size[i])
                                 self.Mouse_Click(x_list[i],y_list[i])
-                                self.Mouse_Click(x_list[i],y_list[i])
+                                if self.Use_Normal_attack == 1 :
+                                    self.Mouse_Click(x_list[i],y_list[i])
                                 frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)  
                                 check_if_click = self.If_clickMonster(frame_out,self.template)
                                 if check_if_click == True :
@@ -131,15 +137,24 @@ class Script():
                     # if cv2.waitKey(1) == ord('q'):
                     #         break                    
 
-    def string_spliter(self,string):
-        string_list = []
-        splitat = int(len(string)/3)
-        left ,right = string[:splitat], string[splitat+splitat:]
-        middle = string [splitat :-splitat]
-        string_list.append(left)
-        string_list.append(middle)
-        string_list.append(right)
-        return string_list
+    def string_spliter(self):
+        monster_namelist = []
+        monster_name = self.Monster_name
+        spilter = 3
+        for i in range(0,len(monster_name)):
+            result = textwrap.wrap(monster_name[i],spilter)
+            for j in range(0,len(result)):
+                monster_namelist.append(result[j])
+        self.Monster_name_list = monster_namelist
+        
+        ID_namelist = []
+        ID_name = self.Character_name
+        
+        for i in range(0,len(ID_name)):
+            result = textwrap.wrap(ID_name[i],spilter)
+            for j in range(0,len(result)):
+                ID_namelist.append(result[j])
+        self.Character_name_list = ID_namelist
 
 
     def screen_spliter(self):
@@ -231,7 +246,7 @@ class Script():
         center_y_click = None
         for i in range(boxes):
             if text['text'][i] != '':      
-                Target_string = self.string_spliter(self.Character_name)
+                Target_string = self.Character_name_list
                 for j in range(0,len(Target_string)) : 
                     if Target_string[j] in text['text'][i] :
                         Result = True
@@ -246,22 +261,28 @@ class Script():
         cap = cv2.VideoCapture("./data/0001.jpg",cv2.CAP_IMAGES)
         ret, frame = cap.read()
         frame_out = frame.copy()
-        
+
         hsv = cv2.cvtColor(frame_out, cv2.COLOR_BGR2HSV)
-        if self.Monster_name_color == "Red" :
+        if self.Monster_name_color == "Red" or self.Monster_name_color == "Both" :
             lower = np.array([155,25,100])
             upper = np.array([343,255,255])
-            text_hsv = cv2.inRange(hsv,lower, upper )
-        
-        elif self.Monster_name_color != "Red" :
+            text_hsv1 = cv2.inRange(hsv,lower, upper )
+            text_hsv = text_hsv1
+
+        if self.Monster_name_color != "Red" or self.Monster_name_color == "Both":
             lower = np.array([(0,0,70)])
             upper = np.array([(180,30,200)])
-            text_hsv = cv2.inRange(hsv,lower, upper )
+            text_hsv2 = cv2.inRange(hsv,lower, upper )
+            text_hsv = text_hsv2
+            
+        if self.Monster_name_color == "Both" :
+            text_hsv = cv2.addWeighted(text_hsv1,1,text_hsv2,1,0)
+
 
         pytesseract.pytesseract.tesseract_cmd = '.\Tesseract-OCR\\tesseract.exe'
         text = pytesseract.image_to_string(text_hsv,lang = 'eng')
         Result = False  
-        Target_string = self.string_spliter(self.Monster_name)
+        Target_string = self.Monster_name_list
         for j in range(0,len(Target_string)) : 
             if Target_string[j] in text :
                 Result = True
@@ -329,8 +350,7 @@ class Script():
 
             
     def Defeating_Process(self):
-        if self.Use_Normal_attack == "1" :
-            # print(self.Use_Normal_attack)
+        if self.Use_Normal_attack == 1 :
             self.Keyboard_input("space")
         self.Keyboard_input("F1")
         time.sleep(0.1) 
@@ -372,23 +392,23 @@ class Script():
         cap = cv2.VideoCapture("./data/0001.jpg",cv2.CAP_IMAGES)
         ret, frame = cap.read()
         frame_out = frame.copy()
-        hsv = cv2.cvtColor(frame_out, cv2.COLOR_BGR2HSV)
-        def fixHSVRange(h, s, v):
-            # Normal H,S,V: (0-360,0-100%,0-100%)
-            # OpenCV H,S,V: (0-180,0-255 ,0-255)
-            return (180 * h / 360, 255 * s / 100, 255 * v / 100)
-        
-        # lower = np.array([fixHSVRange(150,40,50)])
-        # upper = np.array([fixHSVRange(170,100,100)])
-        lower = np.array([fixHSVRange(140,0,0)])
-        upper = np.array([fixHSVRange(160,100,100)])
-        text_hsv = cv2.inRange(hsv,lower, upper )
 
-        # pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-        pytesseract.pytesseract.tesseract_cmd = '.\Tesseract-OCR\\tesseract.exe'
-        text = pytesseract.image_to_data(text_hsv,lang = 'eng',output_type='dict')
-        return text_hsv 
-    
+        hsv = cv2.cvtColor(frame_out, cv2.COLOR_BGR2HSV)
+        if self.Monster_name_color == "Red" or self.Monster_name_color == "Both" :
+            lower = np.array([155,25,100])
+            upper = np.array([343,255,255])
+            text_hsv1 = cv2.inRange(hsv,lower, upper )
+            text_hsv = text_hsv1
+
+        if self.Monster_name_color != "Red" or self.Monster_name_color == "Both":
+            lower = np.array([(0,0,70)])
+            upper = np.array([(180,30,200)])
+            text_hsv2 = cv2.inRange(hsv,lower, upper )
+            text_hsv = text_hsv2
+
+        if self.Monster_name_color == "Both" :
+            text_hsv = cv2.addWeighted(text_hsv1,1,text_hsv2,1,0)
+        return text_hsv
 
     def Show_Screen(self):
         object_detector = cv2.createBackgroundSubtractorMOG2(varThreshold = 10, detectShadows = False) 
@@ -418,15 +438,18 @@ class Keystrokes_Monitor () :
 
 if __name__ == '__main__':
    
-    # script = Script("WorkingFarmer","Assassin Builder A", "GRay", 1) # Assassin_Builder_A
+    # script = Script("WorkingFarmer","Assassin Builder A", "Both", 1) # Assassin_Builder_A
     # script.Show_Screen()
     # script.Yolo_Labelling(1,1,1,1,1)
 
-   
-    name_split = sys.argv[2].split("_")
-    monster_name = ' '.join (name_split)
-    Main_Process = Script(sys.argv[1],monster_name,sys.argv[3],sys.argv[4])
-    # Main_Process = Script("RedDust","Assassin Builder A", "Red", 1) # Assassin_Builder_A
+    parser = ArgumentParser()
+    parser.add_argument("--ID" ,nargs="*", type= str, default = "Siwh")
+    parser.add_argument("--Monster" ,nargs="*", type= str, default = ["Assassin Builder A", "Queen Crook"])
+    parser.add_argument("--Color", nargs="*", type= str, default = "Both")
+    parser.add_argument("--Normal_Attack",  nargs="*", type= int, default = 1)
+    args = parser.parse_args()
+    Main_Process = Script(args.ID,args.Monster,args.Color,args.Normal_Attack)
+
     Keystrokes_Monitor = Keystrokes_Monitor()
     Main_Process_thread = threading.Thread( target=Main_Process.Main)
 # Collect events until released
