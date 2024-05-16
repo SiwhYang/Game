@@ -168,7 +168,7 @@ class Script():
         self.screen_roi_left = int(screen_roi_x * cut_ratio)
         self.screen_roi_width = screen_width
         self.screen_roi_top = 1
-        self.screen_roi_height = screen_roi_y - 10
+        self.screen_roi_height = screen_roi_y - 100
 
     def Yolo_Labelling (self,frame,C_x,C_y,Size_x,Size_y):
         name = self.Monster_name
@@ -226,6 +226,16 @@ class Script():
         ret, frame = cap.read()
         frame_out = frame.copy()
         hsv = cv2.cvtColor(frame_out, cv2.COLOR_BGR2HSV)
+        def crop_img(img, scale=0.75):
+            center_x, center_y = img.shape[1] / 2, img.shape[0] / 2
+            width_scaled, height_scaled = img.shape[1] * scale, img.shape[0] * scale
+            left_x, right_x = center_x - width_scaled / 2, center_x + width_scaled / 2
+            top_y, bottom_y = center_y - height_scaled / 2, center_y + height_scaled / 2
+            img_cropped = img[int(top_y):int(bottom_y), int(left_x):int(right_x)]
+            img_resize = cv2.resize(img_cropped,( img.shape[1],img.shape[0]), interpolation=cv2.INTER_AREA)
+            return img_resize
+        hsv = crop_img(hsv)
+
         def fixHSVRange(h, s, v):
             # Normal H,S,V: (0-360,0-100%,0-100%)
             # OpenCV H,S,V: (0-180,0-255 ,0-255)
@@ -253,7 +263,7 @@ class Script():
                         center_x_click = int(text['left'][i] + text['width'][i]/2)
                         center_y_click = int(text['top'][i] + text['height'][i]/2)
         if center_x_click != None and  center_y_click != None :
-            return Result, center_x_click, center_y_click+10 #, text_hsv
+            return Result, center_x_click, center_y_click+20 #, text_hsv
         else : return Result, 0 ,0 
 
     def Refresh_and_Process_Name_screen(self):
@@ -443,8 +453,8 @@ if __name__ == '__main__':
     # script.Yolo_Labelling(1,1,1,1,1)
 
     parser = ArgumentParser()
-    parser.add_argument("--ID" ,nargs="*", type= str, default = "Siwh")
-    parser.add_argument("--Monster" ,nargs="*", type= str, default = ["Assassin Builder A", "Queen Crook"])
+    parser.add_argument("--ID" ,nargs="*", type= str, default = "BlackKingBar")
+    parser.add_argument("--Monster" ,nargs="*", type= str, default = ["Assassin Builder A", "Mit Clod"])
     parser.add_argument("--Color", nargs="*", type= str, default = "Both")
     parser.add_argument("--Normal_Attack",  nargs="*", type= int, default = 1)
     args = parser.parse_args()

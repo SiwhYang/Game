@@ -9,3 +9,10 @@ Q:
 
 --------------------------------------------------
 1. 將上面完整script做改裝，使其自動farming的同時自動輸出yolo標註的格式。
+2. 已整合完成，將distor分為兩版，自動標記原版 與 yolo版 
+3. 自動標記 -> 調整screen cutter，名字檢測，改寫 ,yolo->仍需關閉print
+
+----------------------------------------------------
+Before release, check
+1. screen cutter 
+2. if click monster parameter
