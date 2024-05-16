@@ -17,6 +17,8 @@ import os
 import detect_api
 import torch
 from PIL import Image
+from argparse import ArgumentParser
+import textwrap
 
 warnings.filterwarnings("ignore")
 
@@ -31,11 +33,13 @@ Process_controller = True
 
 class Script():
  
-    def __init__(self,name,Monster_name,Monster_name_color, Use_Normal_attack ):
+    def __init__(self,name,Monster_name,Monster_name_color, Use_Normal_attack , Click_myself ,Looting_time):
         self.Character_name = name
+        self.Character_name_list = None
         self.Character_x_coordinate = None
         self.Character_y_coordinate = None
         self.Monster_name = Monster_name
+        self.Monster_name_list = None
         self.Monster_name_color = Monster_name_color
         self.Use_Normal_attack = Use_Normal_attack
         screen_x = None
@@ -45,7 +49,10 @@ class Script():
         screen_roi_top = None
         screen_roi_height = None
         self.detector = None
+        self.Click_myself = Click_myself
+        self.Looting_time = Looting_time
         self.screen_spliter()
+        self.string_spliter()
         self.template = cv2.imread("./template/template1.jpg")
         return
     
@@ -88,7 +95,7 @@ class Script():
         print("Character name = '{}' confirmed".format(self.Character_name) )
         print("Monster name = '{}' confirmed".format( self.Monster_name) )
         print("Initializing...")
-        self.detector = detect_api.detectapi(weights="./weights/Ore_0.03.pt",img_size=416)
+        self.detector = detect_api.detectapi(weights="./weights/ABA_0.15.pt",img_size=416)
         Moster_selected = False
         while(Program_controller):
             if (Process_controller) :
@@ -97,13 +104,13 @@ class Script():
                 if Moster_selected == False :
                     self.Keyboard_input('F2')
                     self.Keyboard_input('Esc') 
-                    # _,Character_x_position,Character_y_position = self.Refresh_and_Process_myself_screen() # check myself
-                    self.Mouse_Click( self.Character_x_coordinate,self.Character_y_coordinate) # check myself
-                    frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)  # check myself
-                    check_if_click = self.If_clickMonster(frame_out,self.template) # check myself
-                    if check_if_click == True : # check myself
-                        Moster_selected = True  
-                        continue   # check myself
+                    if self.Click_myself == 1 :
+                        self.Mouse_Click( self.Character_x_coordinate,self.Character_y_coordinate) # check myself
+                        frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)  # check myself
+                        check_if_click = self.If_clickMonster(frame_out,self.template) # check myself
+                        if check_if_click == True : # check myself
+                            Moster_selected = True  
+                            continue   # check myself
                     print("Try to find {}".format(self.Monster_name))
                     if len(x_list) < 30 : 
                         for i in range(0,len(x_list)): # Try to click monster
@@ -113,7 +120,8 @@ class Script():
                             if Findtext == True:
                                 # self.Yolo_Labelling (frame_out,x_list[i],y_list[i],x_size[i],y_size[i])
                                 self.Mouse_Click(x_list[i],y_list[i])
-                                self.Mouse_Click(x_list[i],y_list[i])
+                                if self.Use_Normal_attack == 1 :
+                                    self.Mouse_Click(x_list[i],y_list[i])
                                 frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)  
                                 check_if_click = self.If_clickMonster(frame_out,self.template)
                                 if check_if_click == True :
@@ -140,7 +148,7 @@ class Script():
                         # cv2.imshow('frame', frame_out)           
                     # self.Keyboard_input('F2')
                     print("Defeated {}, looting ".format(self.Monster_name))
-                    self.Keyboard_press('space',3)
+                    self.Keyboard_press('space',self.Looting_time)
                     count = count + 1
                     print("We have killed {} {}  ".format(count,self.Monster_name))
                     Moster_selected = False
@@ -148,15 +156,24 @@ class Script():
                     # if cv2.waitKey(1) == ord('q'):
                     #         break                    
 
-    def string_spliter(self,string):
-        string_list = []
-        splitat = int(len(string)/3)
-        left ,right = string[:splitat], string[splitat+splitat:]
-        middle = string [splitat :-splitat]
-        string_list.append(left)
-        string_list.append(middle)
-        string_list.append(right)
-        return string_list
+    def string_spliter(self):
+        monster_namelist = []
+        monster_name = self.Monster_name
+        spilter = 3
+        for i in range(0,len(monster_name)):
+            result = textwrap.wrap(monster_name[i],spilter)
+            for j in range(0,len(result)):
+                monster_namelist.append(result[j])
+        self.Monster_name_list = monster_namelist
+        
+        ID_namelist = []
+        ID_name = self.Character_name
+        
+        for i in range(0,len(ID_name)):
+            result = textwrap.wrap(ID_name[i],spilter)
+            for j in range(0,len(result)):
+                ID_namelist.append(result[j])
+        self.Character_name_list = ID_namelist
 
 
     def screen_spliter(self):
@@ -171,7 +188,7 @@ class Script():
         self.screen_roi_left = int(screen_roi_x * cut_ratio)
         self.screen_roi_width = screen_width
         self.screen_roi_top = 1
-        self.screen_roi_height = screen_roi_y - 30
+        self.screen_roi_height = screen_roi_y - 100
 
     def Yolo_Labelling (self,frame,C_x,C_y,Size_x,Size_y):
         name = self.Monster_name
@@ -230,6 +247,17 @@ class Script():
         frame = self.Screen_Capture_return()
         frame_out = frame.copy()
         hsv = cv2.cvtColor(frame_out, cv2.COLOR_BGR2HSV)
+
+        def crop_img(img, scale=0.6):
+            center_x, center_y = img.shape[1] / 2, img.shape[0] / 2
+            width_scaled, height_scaled = img.shape[1] * scale, img.shape[0] * scale
+            left_x, right_x = center_x - width_scaled / 2, center_x + width_scaled / 2
+            top_y, bottom_y = center_y - height_scaled / 2, center_y + height_scaled / 2
+            img_cropped = img[int(top_y):int(bottom_y), int(left_x):int(right_x)]
+            img_resize = cv2.resize(img_cropped,( img.shape[1],img.shape[0]), interpolation=cv2.INTER_AREA)
+            return img_resize
+        hsv = crop_img(hsv)
+
         def fixHSVRange(h, s, v):
             # Normal H,S,V: (0-360,0-100%,0-100%)
             # OpenCV H,S,V: (0-180,0-255 ,0-255)
@@ -249,38 +277,41 @@ class Script():
         center_y_click = None
         for i in range(boxes):
             if text['text'][i] != '':      
-                Target_string = self.string_spliter(self.Character_name)
+                Target_string = self.Character_name_list
                 for j in range(0,len(Target_string)) : 
                     if Target_string[j] in text['text'][i] :
                         Result = True
                         center_x_click = int(text['left'][i] + text['width'][i]/2)
                         center_y_click = int(text['top'][i] + text['height'][i]/2)
         if center_x_click != None and  center_y_click != None :
-            return Result, center_x_click, center_y_click+10 #, text_hsv
+            return Result, center_x_click, center_y_click+20 #, text_hsv
         else : return Result, 0 ,0 
 
     def Refresh_and_Process_Name_screen(self):
-        # self.Screen_Capture()
-        # cap = cv2.VideoCapture("./data/0001.jpg",cv2.CAP_IMAGES)
-        # ret, frame = cap.read()
         frame = self.Screen_Capture_return()
         frame_out = frame.copy()
-        
+
         hsv = cv2.cvtColor(frame_out, cv2.COLOR_BGR2HSV)
-        if self.Monster_name_color == "Red" :
+        if self.Monster_name_color == "Red" or self.Monster_name_color == "Both" :
             lower = np.array([155,25,100])
             upper = np.array([343,255,255])
-            text_hsv = cv2.inRange(hsv,lower, upper )
-        
-        elif self.Monster_name_color != "Red" :
+            text_hsv1 = cv2.inRange(hsv,lower, upper )
+            text_hsv = text_hsv1
+
+        if self.Monster_name_color != "Red" or self.Monster_name_color == "Both":
             lower = np.array([(0,0,70)])
             upper = np.array([(180,30,200)])
-            text_hsv = cv2.inRange(hsv,lower, upper )
+            text_hsv2 = cv2.inRange(hsv,lower, upper )
+            text_hsv = text_hsv2
+            
+        if self.Monster_name_color == "Both" :
+            text_hsv = cv2.addWeighted(text_hsv1,1,text_hsv2,1,0)
+
 
         pytesseract.pytesseract.tesseract_cmd = '.\Tesseract-OCR\\tesseract.exe'
         text = pytesseract.image_to_string(text_hsv,lang = 'eng')
         Result = False  
-        Target_string = self.string_spliter(self.Monster_name)
+        Target_string = self.Monster_name_list
         for j in range(0,len(Target_string)) : 
             if Target_string[j] in text :
                 Result = True
@@ -334,8 +365,7 @@ class Script():
             
 
     def Defeating_Process(self):
-        if self.Use_Normal_attack == "1" :
-            # print(self.Use_Normal_attack)
+        if self.Use_Normal_attack == 1 :
             self.Keyboard_input("space")
         self.Keyboard_input("F1")
         time.sleep(0.1) 
@@ -344,7 +374,7 @@ class Script():
     
     def Keyboard_input (self, keyboard):
         pydirectinput.press(keyboard)
-        time.sleep(1)
+        time.sleep(0.5)
         pydirectinput.keyUp(keyboard)
         return 
     
@@ -419,15 +449,21 @@ class Keystrokes_Monitor () :
 
 if __name__ == '__main__':
    
-    # script = Script("RedDust","Assassin Builder A", "Gray", 1) # Assassin_Builder_A
+    # script = Script("WorkingFarmer","Assassin Builder A", "Both", 1) # Assassin_Builder_A
     # script.test_screen()
     # # script.Yolo_Labelling(1,1,1,1,1)
 
    
-    name_split = sys.argv[2].split("_")
-    monster_name = ' '.join (name_split)
-    Main_Process = Script(sys.argv[1],monster_name,sys.argv[3],sys.argv[4])
-    # Main_Process = Script("RedDust","Assassin Builder A", "Red", 1) # Assassin_Builder_A
+    parser = ArgumentParser()
+    parser.add_argument("--ID" ,nargs="*", type= str, default = "BlackKingBar")
+    parser.add_argument("--Monster" ,nargs="*", type= str, default = ["Assassin Builder A", "Mit Clod"])
+    parser.add_argument("--Color", nargs="*", type= str, default = "Both")
+    parser.add_argument("--Normal_Attack",  nargs="*", type= int, default = 1)
+    parser.add_argument("--Click_myself",  nargs="*", type= int, default = 1)
+    parser.add_argument("--Looting_time",  nargs="*", type= int, default = 3)
+    args = parser.parse_args()
+    Main_Process = Script(args.ID,args.Monster,args.Color,args.Normal_Attack,args.Click_myself,args.Looting_time)
+
     Keystrokes_Monitor = Keystrokes_Monitor()
     Main_Process_thread = threading.Thread( target=Main_Process.Main)
 # Collect events until released

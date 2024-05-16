@@ -29,7 +29,7 @@ Process_controller = True
 
 class Script():
  
-    def __init__(self,name,Monster_name,Monster_name_color, Use_Normal_attack ):
+    def __init__(self,name,Monster_name,Monster_name_color, Use_Normal_attack , Click_myself ,Looting_time):
         self.Character_name = name
         self.Character_name_list = None
         self.Character_x_coordinate = None
@@ -44,6 +44,8 @@ class Script():
         screen_roi_width = None
         screen_roi_top = None
         screen_roi_height = None
+        self.Click_myself = Click_myself
+        self.Looting_time = Looting_time
         self.screen_spliter()
         self.string_spliter()
         self.template = cv2.imread("./template/template1.jpg")
@@ -85,13 +87,13 @@ class Script():
                 if Moster_selected == False :
                     self.Keyboard_input('F2')
                     self.Keyboard_input('Esc') 
-                    # _,Character_x_position,Character_y_position = self.Refresh_and_Process_myself_screen() # check myself
-                    self.Mouse_Click( self.Character_x_coordinate,self.Character_y_coordinate) # check myself
-                    frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)  # check myself
-                    check_if_click = self.If_clickMonster(frame_out,self.template) # check myself
-                    if check_if_click == True : # check myself
-                        Moster_selected = True  
-                        continue   # check myself
+                    if self.Click_myself == 1 :
+                        self.Mouse_Click( self.Character_x_coordinate,self.Character_y_coordinate) # check myself
+                        frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)  # check myself
+                        check_if_click = self.If_clickMonster(frame_out,self.template) # check myself
+                        if check_if_click == True : # check myself
+                            Moster_selected = True  
+                            continue   # check myself
                     print("Try to find {}".format(self.Monster_name))
                     if len(x_list) < 30 : 
                         for i in range(0,len(x_list)): # Try to click monster
@@ -129,7 +131,7 @@ class Script():
                         # cv2.imshow('frame', frame_out)           
                     # self.Keyboard_input('F2')
                     print("Defeated {}, looting ".format(self.Monster_name))
-                    self.Keyboard_press('space',3)
+                    self.Keyboard_press('space',self.Looting_time)
                     count = count + 1
                     print("We have killed {} {}  ".format(count,self.Monster_name))
                     Moster_selected = False
@@ -369,7 +371,7 @@ class Script():
     
     def Keyboard_input (self, keyboard):
         pydirectinput.press(keyboard)
-        time.sleep(1)
+        time.sleep(0.5)
         pydirectinput.keyUp(keyboard)
         return 
     
@@ -457,8 +459,10 @@ if __name__ == '__main__':
     parser.add_argument("--Monster" ,nargs="*", type= str, default = ["Assassin Builder A", "Mit Clod"])
     parser.add_argument("--Color", nargs="*", type= str, default = "Both")
     parser.add_argument("--Normal_Attack",  nargs="*", type= int, default = 1)
+    parser.add_argument("--Click_myself",  nargs="*", type= int, default = 1)
+    parser.add_argument("--Looting_time",  nargs="*", type= int, default = 3)
     args = parser.parse_args()
-    Main_Process = Script(args.ID,args.Monster,args.Color,args.Normal_Attack)
+    Main_Process = Script(args.ID,args.Monster,args.Color,args.Normal_Attack,args.Click_myself,args.Looting_time)
 
     Keystrokes_Monitor = Keystrokes_Monitor()
     Main_Process_thread = threading.Thread( target=Main_Process.Main)

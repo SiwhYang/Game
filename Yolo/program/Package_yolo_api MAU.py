@@ -89,7 +89,7 @@ class Script():
         print("Character name = '{}' confirmed".format(self.Character_name) )
         print("Monster name = '{}' confirmed".format( self.Monster_name) )
         print("Initializing...")
-        self.detector = detect_api.detectapi(weights="./weights/Hobo_0.05.pt",img_size=416)
+        self.detector = detect_api.detectapi(weights="./weights/ABA_0.15.pt",img_size=416)
         Moster_selected = False
         while(Program_controller):
             if (Process_controller) :
