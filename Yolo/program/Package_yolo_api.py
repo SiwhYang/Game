@@ -99,7 +99,7 @@ class Script():
         Moster_selected = False
         while(Program_controller):
             if (Process_controller) :
-                # print(Moster_selected)
+                # print(Moster_selected)p
                 frame_out,x_list,y_list,x_size,y_size = self.Refresh_and_Process_screen(object_detector)  
                 if Moster_selected == False :
                     self.Keyboard_input('F2')
@@ -248,7 +248,7 @@ class Script():
         frame_out = frame.copy()
         hsv = cv2.cvtColor(frame_out, cv2.COLOR_BGR2HSV)
 
-        def crop_img(img, scale=0.6):
+        def crop_img(img, scale=0.7):
             center_x, center_y = img.shape[1] / 2, img.shape[0] / 2
             width_scaled, height_scaled = img.shape[1] * scale, img.shape[0] * scale
             left_x, right_x = center_x - width_scaled / 2, center_x + width_scaled / 2
@@ -374,7 +374,7 @@ class Script():
     
     def Keyboard_input (self, keyboard):
         pydirectinput.press(keyboard)
-        time.sleep(0.5)
+        time.sleep(0.7)
         pydirectinput.keyUp(keyboard)
         return 
     
@@ -455,11 +455,12 @@ if __name__ == '__main__':
 
    
     parser = ArgumentParser()
-    parser.add_argument("--ID" ,nargs="*", type= str, default = "BlackKingBar")
-    parser.add_argument("--Monster" ,nargs="*", type= str, default = ["Assassin Builder A", "Mit Clod"])
-    parser.add_argument("--Color", nargs="*", type= str, default = "Both")
+    # parser.add_argument("--ID" ,nargs="*", type= str, default = "lllllllllllllll")
+    parser.add_argument("--ID" ,nargs="*", type= str, default = "Siwh")
+    parser.add_argument("--Monster" ,nargs="*", type= str, default = ["Assassin Builder A"])
+    parser.add_argument("--Color", nargs="*", type= str, default = "Red")
     parser.add_argument("--Normal_Attack",  nargs="*", type= int, default = 1)
-    parser.add_argument("--Click_myself",  nargs="*", type= int, default = 1)
+    parser.add_argument("--Click_myself",  nargs="*", type= int, default = 0)
     parser.add_argument("--Looting_time",  nargs="*", type= int, default = 3)
     args = parser.parse_args()
     Main_Process = Script(args.ID,args.Monster,args.Color,args.Normal_Attack,args.Click_myself,args.Looting_time)
