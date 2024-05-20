@@ -11,7 +11,7 @@ from utils.plots import plot_one_box
 from utils.torch_utils import select_device, load_classifier
 
 class simulation_opt:
-    def __init__(self,weights,img_size = 640,conf_thres = 0.15,
+    def __init__(self,weights,img_size = 640,conf_thres = 0.03,
                  iou_thres = 0.45,device='cpu',view_img=False,
                  classes = None,agnostic_nms = False,
                  augment = False,update = False,exist_ok = False):
@@ -31,7 +31,7 @@ class simulation_opt:
         
 
 class detectapi:
-    def __init__(self,weights,img_size=416,conf_thres = 0.15):
+    def __init__(self,weights,img_size=416,conf_thres = 0.03):
         self.opt = simulation_opt(weights=weights,img_size=img_size,conf_thres = conf_thres)
         weights, imgsz = self.opt.weights,self.opt.img_size
 

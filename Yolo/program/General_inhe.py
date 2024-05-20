@@ -30,9 +30,7 @@ Program_controller = True
 Process_controller = True
 
 
-
-class Script():
- 
+class Script ():
     def __init__(self,name,Monster_name,Monster_name_color, Use_Normal_attack , Click_myself ,Looting_time):
         self.Character_name = name
         self.Character_name_list = None
@@ -48,27 +46,14 @@ class Script():
         screen_roi_width = None
         screen_roi_top = None
         screen_roi_height = None
-        self.detector = None
         self.Click_myself = Click_myself
         self.Looting_time = Looting_time
         self.screen_spliter()
         self.string_spliter()
         self.template = cv2.imread("./template/template1.jpg")
         return
-    
-    def Screen_Capture_return(self):
-        with mss() as sct :
-            bounding_box = {'top': 1, 'left': 1, 'width': self.screen_x , 'height': self.screen_y}
-            screenshot = sct.grab(bounding_box)
-            img = Image.frombytes('RGB', screenshot.size, screenshot.bgra, 'raw', 'BGRX')
-            arr = np.array(img)
-            screenshot = cv2.cvtColor(arr, cv2.COLOR_BGRA2RGB)
-            mask = np.zeros(screenshot.shape,np.uint8)
-            mask[self.screen_roi_top:self.screen_roi_height,self.screen_roi_left:self.screen_roi_width] = screenshot[self.screen_roi_top:self.screen_roi_height,self.screen_roi_left:self.screen_roi_width]
-            
-        return mask
-    
-    def Screen_Capture(self):    
+  
+    def Screen_Capture(self):
         with mss() as sct :
             bounding_box = {'top': 1, 'left': 1, 'width': self.screen_x , 'height': self.screen_y}
             screenshot = np.array(sct.grab(bounding_box))
@@ -78,13 +63,20 @@ class Script():
         # https://stackoverflow.com/questions/54719730/when-taking-many-screenshots-with-mss-memory-fills-quickly-and-crashes-python
         # context manager
         return
-
+    
+    def Refresh_Screen(self):
+        self.Screen_Capture()
+        cap = cv2.VideoCapture("./data/0001.jpg",cv2.CAP_IMAGES)
+        ret, frame = cap.read()
+        frame_out = frame.copy()
+        return frame_out
 
     def Main(self):
         print(Lincense_Text)
         count = 0
         global Program_controller
         global Process_controller
+        print("Initializing...")
         object_detector = cv2.createBackgroundSubtractorMOG2() 
         result,self.Character_x_coordinate, self.Character_y_coordinate = self.Refresh_and_Process_myself_screen()
         if result == False :
@@ -94,12 +86,10 @@ class Script():
             return
         print("Character name = '{}' confirmed".format(self.Character_name) )
         print("Monster name = '{}' confirmed".format( self.Monster_name) )
-        print("Initializing...")
-        self.detector = detect_api.detectapi(weights="./weights/Ore_0.03.pt",img_size=416)
         Moster_selected = False
         while(Program_controller):
             if (Process_controller) :
-                # print(Moster_selected)p
+                # print(Moster_selected)
                 frame_out,x_list,y_list,x_size,y_size = self.Refresh_and_Process_screen(object_detector)  
                 if Moster_selected == False :
                     self.Keyboard_input('F2')
@@ -183,8 +173,7 @@ class Script():
         screen_roi_y = screen_length
         self.screen_x = screen_roi_x
         self.screen_y = screen_roi_y
-        # cut_ratio = 0.24
-        cut_ratio = 0
+        cut_ratio = 0.24
         self.screen_roi_left = int(screen_roi_x * cut_ratio)
         self.screen_roi_width = screen_width
         self.screen_roi_top = 1
@@ -233,20 +222,13 @@ class Script():
         write_line = "{} {} {} {} {}".format(count_lines,C_x_ratio,C_y_ratio,Size_x_ratio,Size_y_ratio)
         with open("./Yolo/{}/{}.txt".format(self.Monster_name,dt_string),"a") as f :
             f.writelines(write_line +'\n')
-        
         return 
 
-
-
-
     def Refresh_and_Process_myself_screen(self):
-        print("Start checking character's name")
-        # self.Screen_Capture()
-        # cap = cv2.VideoCapture("./data/0001.jpg",cv2.CAP_IMAGES)
-        # ret, frame = cap.read()
-        frame = self.Screen_Capture_return()
+        frame = self.Refresh_Screen()
         frame_out = frame.copy()
         hsv = cv2.cvtColor(frame_out, cv2.COLOR_BGR2HSV)
+ 
 
         def crop_img(img, scale=0.7):
             center_x, center_y = img.shape[1] / 2, img.shape[0] / 2
@@ -264,7 +246,7 @@ class Script():
             return (180 * h / 360, 255 * s / 100, 255 * v / 100)
         
        
-        lower = np.array([fixHSVRange(140,10,0)])
+        lower = np.array([fixHSVRange(140,20,40)])
         upper = np.array([fixHSVRange(160,100,100)])
         text_hsv = cv2.inRange(hsv,lower, upper )
 
@@ -288,7 +270,7 @@ class Script():
         else : return Result, 0 ,0 
 
     def Refresh_and_Process_Name_screen(self):
-        frame = self.Screen_Capture_return()
+        frame = self.Refresh_Screen()
         frame_out = frame.copy()
 
         hsv = cv2.cvtColor(frame_out, cv2.COLOR_BGR2HSV)
@@ -319,21 +301,34 @@ class Script():
         return text_hsv,Result
 
     def Refresh_and_Process_screen(self,object_detector):
-        frame = self.Screen_Capture_return()
-        with torch.no_grad() :
-            result,names = self.detector.detect([frame])
-            img = result[0][0]
-            center_x_click = []
-            center_y_click = []
-            for cls,(x1,y1,x2,y2),conf in result[0][1]:
-                print(names[cls],x1,y1,x2,y2,conf)
-                cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0))
-                center_x = (x1+x2)/2
-                center_y = (y1+y2)/2
-                center_x_click.append(center_x)
-                center_y_click.append(center_y)
-        return img, center_x_click, center_y_click, 0 , 0
+        frame = self.Refresh_Screen()
+        frame_out = frame.copy()
+        gray = object_detector.apply(frame) 
+        _,mask = cv2.threshold(gray,200,255,cv2.THRESH_BINARY)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        mask_eroded = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        dilated = cv2.dilate(mask_eroded,cv2. getStructuringElement(cv2.MORPH_ELLIPSE, (10,10)),iterations = 2)
 
+        contours,_ = cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE) 
+        min_contour_area = 100  # Define your minimum area threshold > 500 ABA > 300 Ore
+        # max_contour_area = 1000
+        large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
+        # large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) < max_contour_area]
+        center_x_click = []
+        center_y_click = []
+        Size_x_roi = []
+        Size_y_roi = []
+        for cnt in large_contours:
+            x, y, w, h = cv2.boundingRect(cnt)
+            center_x = (x*2 + w)/2
+            center_y = (y*2 + h)/2
+            # cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
+            Size_x_roi.append(w)
+            Size_y_roi.append(h)
+            center_x_click.append(center_x)
+            center_y_click.append(center_y)
+
+        return frame, center_x_click, center_y_click, Size_x_roi, Size_y_roi
     
 
     def If_clickMonster(self,frame,template):  
@@ -363,7 +358,6 @@ class Script():
         return result
 
             
-
     def Defeating_Process(self):
         if self.Use_Normal_attack == 1 :
             self.Keyboard_input("space")
@@ -374,7 +368,7 @@ class Script():
     
     def Keyboard_input (self, keyboard):
         pydirectinput.press(keyboard)
-        time.sleep(0.7)
+        time.sleep(0.5)
         pydirectinput.keyUp(keyboard)
         return 
     
@@ -402,33 +396,163 @@ class Script():
         # pydirectinput.click()
         return 
 
-    def test_screen(self):
-        
-        a = detect_api.detectapi(weights="./weights/ABA_0.15.pt",img_size=416)
-        with torch.no_grad():
-            while(True):
-                # self.Screen_Capture()    
-                # cap = cv2.imread("./data/0001.jpg")
-                cap = self.Screen_Capture_return()
-                result,names = a.detect([cap])
-                img = result[0][0]
-                for cls,(x1,y1,x2,y2),conf in result[0][1]:
-                    print(names[cls],x1,y1,x2,y2,conf)
-                    cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0))
-                    cv2.putText(img,names[cls],(x1,y1-30),cv2.FONT_HERSHEY_DUPLEX,2,(255,0,0),thickness=2)
-                cv2.imshow('video',img)
-                if cv2.waitKey(1) == ord('q'):
-                    break   
-        return img 
+
+
+
+
+class Application_Specific(Script):
+ 
+    def __init__(self,name,Monster_name,Monster_name_color, Use_Normal_attack , Click_myself ,Looting_time, config_threshold,pt_name):
+        self.Character_name = name
+        self.Character_name_list = None
+        self.Character_x_coordinate = None
+        self.Character_y_coordinate = None
+        self.Monster_name = Monster_name
+        self.Monster_name_list = None
+        self.Monster_name_color = Monster_name_color
+        self.Use_Normal_attack = Use_Normal_attack
+        screen_x = None
+        screen_y = None
+        screen_roi_left = None
+        screen_roi_width = None
+        screen_roi_top = None
+        screen_roi_height = None
+        self.detector = None
+        self.Click_myself = Click_myself
+        self.Looting_time = Looting_time
+        self.config_threshold = config_threshold
+        self.pt_name = pt_name
+        self.screen_spliter()
+        self.string_spliter()
+        self.template = cv2.imread("./template/template1.jpg")
+        return
+    
+    def Refresh_Screen(self):
+        with mss() as sct :
+            bounding_box = {'top': 1, 'left': 1, 'width': self.screen_x , 'height': self.screen_y}
+            screenshot = sct.grab(bounding_box)
+            img = Image.frombytes('RGB', screenshot.size, screenshot.bgra, 'raw', 'BGRX')
+            arr = np.array(img)
+            screenshot = cv2.cvtColor(arr, cv2.COLOR_BGRA2RGB)
+            mask = np.zeros(screenshot.shape,np.uint8)
+            mask[self.screen_roi_top:self.screen_roi_height,self.screen_roi_left:self.screen_roi_width] = screenshot[self.screen_roi_top:self.screen_roi_height,self.screen_roi_left:self.screen_roi_width]
+        return mask
     
 
-    def Show_Screen(self):
-        while(True):
-            frame = self.test_screen()
-            cv2.imshow('frame', frame)
-            if cv2.waitKey(1) == ord('q'):
-                    break   
 
+    def Main(self):
+        print(Lincense_Text)
+        count = 0
+        global Program_controller
+        global Process_controller
+        object_detector = cv2.createBackgroundSubtractorMOG2() 
+        result,self.Character_x_coordinate, self.Character_y_coordinate = self.Refresh_and_Process_myself_screen()
+        if result == False :
+            Program_controller = False
+            print("Character name error, please check character name is correct and visible !")
+            print("Press 'p' to stop")
+            return
+        print("Character name = '{}' confirmed".format(self.Character_name) )
+        print("Monster name = '{}' confirmed".format( self.Monster_name) )
+        print("Initializing...")
+        self.detector = detect_api.detectapi(weights= pt_name,img_size=416, conf_thres = self.config_threshold)
+        Moster_selected = False
+        while(Program_controller):
+            if (Process_controller) :
+                # print(Moster_selected)
+                frame_out,x_list,y_list,x_size,y_size = self.Refresh_and_Process_screen(object_detector)  
+                if Moster_selected == False :
+                    self.Keyboard_input('F2')
+                    self.Keyboard_input('Esc') 
+                    if self.Click_myself == 1 :
+                        self.Mouse_Click( self.Character_x_coordinate,self.Character_y_coordinate) # check myself
+                        frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)  # check myself
+                        check_if_click = self.If_clickMonster(frame_out,self.template) # check myself
+                        if check_if_click == True : # check myself
+                            Moster_selected = True  
+                            continue   # check myself
+                    print("Try to find {}".format(self.Monster_name))
+                    if len(x_list) < 30 : 
+                        for i in range(0,len(x_list)): # Try to click monster
+                            self.Mouse_movement(x_list[i],y_list[i])
+                            time.sleep(0.1)
+                            _,Findtext = self.Refresh_and_Process_Name_screen()
+                            if Findtext == True:
+                                # self.Yolo_Labelling (frame_out,x_list[i],y_list[i],x_size[i],y_size[i])
+                                self.Mouse_Click(x_list[i],y_list[i])
+                                if self.Use_Normal_attack == 1 :
+                                    self.Mouse_Click(x_list[i],y_list[i])
+                                frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)  
+                                check_if_click = self.If_clickMonster(frame_out,self.template)
+                                if check_if_click == True :
+                                    print("We found {} ".format(self.Monster_name))
+                                    Moster_selected = True  
+                                    break             
+                                else :  
+                                    Moster_selected == False
+                            else :  
+                                Moster_selected == False
+                    else : 
+                        print("Wait for the screen to stabilize")
+
+                        # cv2.imshow('frame', frame_out)  
+                        # if cv2.waitKey(1) == ord('q'):
+                        #     break         
+                elif Moster_selected == True: 
+                    print("Start killing {} ".format(self.Monster_name))
+                    check_if_click = self.If_clickMonster(frame_out,self.template)
+                    while (check_if_click) : 
+                        frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)   
+                        self.Defeating_Process()
+                        check_if_click = self.If_clickMonster(frame_out,self.template)
+                        # cv2.imshow('frame', frame_out)           
+                    # self.Keyboard_input('F2')
+                    print("Defeated {}, looting ".format(self.Monster_name))
+                    self.Keyboard_press('space',self.Looting_time)
+                    count = count + 1
+                    print("We have killed {} {}  ".format(count,self.Monster_name))
+                    Moster_selected = False
+                    # cv2.imshow('f rame', frame_out)
+                    # if cv2.waitKey(1) == ord('q'):
+                    #         break                    
+
+    def screen_spliter(self):
+        screen_width = win32api.GetSystemMetrics(0)
+        screen_length = win32api.GetSystemMetrics(1)
+        screen_roi_x = screen_width 
+        screen_roi_y = screen_length
+        self.screen_x = screen_roi_x
+        self.screen_y = screen_roi_y
+        # cut_ratio = 0.24
+        cut_ratio = 0
+        self.screen_roi_left = int(screen_roi_x * cut_ratio)
+        self.screen_roi_width = screen_width
+        self.screen_roi_top = 1
+        self.screen_roi_height = screen_roi_y - 100
+
+
+    def Refresh_and_Process_screen(self,object_detector):
+        frame = self.Refresh_Screen()
+        with torch.no_grad() :
+            result,names = self.detector.detect([frame])
+            img = result[0][0]
+            center_x_click = []
+            center_y_click = []
+            for cls,(x1,y1,x2,y2),conf in result[0][1]:
+                print(names[cls],x1,y1,x2,y2,conf)
+                cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0))
+                center_x = (x1+x2)/2
+                center_y = (y1+y2)/2
+                center_x_click.append(center_x)
+                center_y_click.append(center_y)
+        return img, center_x_click, center_y_click, 0 , 0
+
+    
+
+class General(Script):
+    pass
+ 
+    
 class Keystrokes_Monitor () :
     def on_release(self,key):
         global Program_controller
@@ -447,23 +571,48 @@ class Keystrokes_Monitor () :
                 return False
             
 
+
+
+
 if __name__ == '__main__':
    
     # script = Script("WorkingFarmer","Assassin Builder A", "Both", 1) # Assassin_Builder_A
     # script.test_screen()
     # # script.Yolo_Labelling(1,1,1,1,1)
 
-   
+    Application = 'A' # 'G' or 'A'
+    target = 'Ore' # when using 'A' choose 'Ore' or 'ABA'
+    ID = 'Siwh'
+
+    if Application == 'A' :
+        if target == 'ABA' :
+            Monster_name = "Assassin Builder A"
+            pt_name = "./weights/ABA_0.15.pt"
+            threshold = 0.15
+        if target == 'Ore' :
+            Monster_name = "Ore Crystal"
+            pt_name = "./weights/Ore_0.03.pt"
+            threshold = 0.03
+    elif Application == 'G' :
+            Monster_name = 'Assassin Builder A'
+            
+
     parser = ArgumentParser()
-    # parser.add_argument("--ID" ,nargs="*", type= str, default = "lllllllllllllll")
-    parser.add_argument("--ID" ,nargs="*", type= str, default = "Siwh")
-    parser.add_argument("--Monster" ,nargs="*", type= str, default = ["Ore Crystal"])
+    parser.add_argument("--ID" ,nargs="*", type= str, default = ID)
+    # parser.add_argument("--ID" ,nargs="*", type= str, default = "SugMaestro")
+    parser.add_argument("--Monster" ,nargs="*", type= str, default = [Monster_name])
     parser.add_argument("--Color", nargs="*", type= str, default = "Red")
     parser.add_argument("--Normal_Attack",  nargs="*", type= int, default = 1)
     parser.add_argument("--Click_myself",  nargs="*", type= int, default = 0)
     parser.add_argument("--Looting_time",  nargs="*", type= int, default = 3)
+    parser.add_argument("--threshold",  nargs="*", type= int, default = 0.15)
+    parser.add_argument("--pt_name",  nargs="*", type= str)
     args = parser.parse_args()
-    Main_Process = Script(args.ID,args.Monster,args.Color,args.Normal_Attack,args.Click_myself,args.Looting_time)
+    Main_Process = None
+    if Application == 'A' : 
+        Main_Process = Application_Specific(args.ID,args.Monster,args.Color,args.Normal_Attack,args.Click_myself,args.Looting_time,args.threshold,args.pt_name)
+    elif Application == 'G' :
+        Main_Process = General (args.ID,args.Monster,args.Color,args.Normal_Attack,args.Click_myself,args.Looting_time)
 
     Keystrokes_Monitor = Keystrokes_Monitor()
     Main_Process_thread = threading.Thread( target=Main_Process.Main)
