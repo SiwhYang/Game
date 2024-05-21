@@ -128,13 +128,12 @@ class Script ():
                 elif Moster_selected == True: 
                     print("Start killing {} ".format(self.Monster_name))
                     check_if_click = self.If_clickMonster(frame_out,self.template)
-                    # fiveMinutes = time.time() + 120
+                    timeout = time.time() + 60*3
                     while (check_if_click) : 
                         frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)   
                         self.Defeating_Process()
                         check_if_click = self.If_clickMonster(frame_out,self.template)
-                        # if time.time() > fiveMinutes : break
-                        # cv2.imshow('frame', frame_out)           
+                        if time.time() > timeout : break# cv2.imshow('frame', frame_out)           
                     # self.Keyboard_input('F2')
                     print("Defeated {}, looting ".format(self.Monster_name))
                     self.Keyboard_press('space',self.Looting_time)
@@ -500,12 +499,12 @@ class Application_Specific(Script):
                 elif Moster_selected == True: 
                     print("Start killing {} ".format(self.Monster_name))
                     check_if_click = self.If_clickMonster(frame_out,self.template)
-                    # fiveMinutes = time.time() + 120
+                    timeout = time.time() + 60*3
                     while (check_if_click) : 
                         frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)   
                         self.Defeating_Process()
                         check_if_click = self.If_clickMonster(frame_out,self.template)
-                        # if time.time() > fiveMinutes : break
+                        if time.time() > timeout : break
                         # cv2.imshow('frame', frame_out)           
                     # self.Keyboard_input('F2')
                     print("Defeated {}, looting ".format(self.Monster_name))
@@ -604,7 +603,7 @@ if __name__ == '__main__':
     parser.add_argument("--Monster" ,nargs="*", type= str, default = [Monster_name])
     parser.add_argument("--Color", nargs="*", type= str, default = "Red")
     parser.add_argument("--Normal_Attack",  nargs="*", type= int, default = 1)
-    parser.add_argument("--Click_myself",  nargs="*", type= int, default = 1)
+    parser.add_argument("--Click_myself",  nargs="*", type= int, default = 0)
     parser.add_argument("--Looting_time",  nargs="*", type= int, default = 3)
     parser.add_argument("--threshold",  nargs="*", type= int, default = threshold)
     parser.add_argument("--pt_name",  nargs="*", type= str)
