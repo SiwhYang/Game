@@ -2,3 +2,4 @@
 Assassin Builder A
 Cloned Assassin BuilderA
 Ore Crystal
+['Brutal']

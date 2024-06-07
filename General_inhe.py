@@ -16,7 +16,7 @@ import torch
 from PIL import Image
 from argparse import ArgumentParser, SUPPRESS
 import textwrap
-
+import Line_Notify 
 
 
 Lincense_Text = "\nCopyright (c) 2024 Siwh of Meow Guild. All Right Reserved.\nThis software may not be copied, \
@@ -28,7 +28,7 @@ Process_controller = True
 
 
 class Script ():
-    def __init__(self,name,Monster_name,Monster_name_color, Use_Normal_attack , Click_myself ,Looting_time):
+    def __init__(self,name,Monster_name,Monster_name_color, Use_Normal_attack , Click_myself ,Looting_time, Skill_Attack,Animus_Attack,Line):
         self.Character_name = name
         self.Character_name_list = None
         self.Character_x_coordinate = None
@@ -43,7 +43,10 @@ class Script ():
         screen_roi_width = None
         screen_roi_top = None
         screen_roi_height = None
+        self.Line = Line
         self.Click_myself = Click_myself
+        self.Skill_Attack = Skill_Attack
+        self.Animus_Attack = Animus_Attack
         self.Looting_time = Looting_time
         self.screen_spliter()
         self.string_spliter()
@@ -98,7 +101,10 @@ class Script ():
                         if check_if_click == True : # check myself
                             Moster_selected = True  
                             continue   # check myself
+                    
                     print("Try to find {}".format(self.Monster_name))
+                    if self.Line == 1 :
+                        Line_Notify.line_Notify("Try to find {}".format(self.Monster_name))
                     if len(x_list) < 30 : 
                         for i in range(0,len(x_list)): # Try to click monster
                             self.Mouse_movement(x_list[i],y_list[i])
@@ -113,6 +119,8 @@ class Script ():
                                 check_if_click = self.If_clickMonster(frame_out,self.template)
                                 if check_if_click == True :
                                     print("We found {} ".format(self.Monster_name))
+                                    if self.Line == 1 :
+                                        Line_Notify.line_Notify("We found {} ".format(self.Monster_name))
                                     Moster_selected = True  
                                     break             
                                 else :  
@@ -121,14 +129,18 @@ class Script ():
                                 Moster_selected == False
                     else : 
                         print("Wait for the screen to stabilize")
+                        if self.Line == 1 :
+                            Line_Notify.line_Notify("Wait for the screen to stabilize")
 
                         # cv2.imshow('frame', frame_out)  
                         # if cv2.waitKey(1) == ord('q'):
                         #     break         
                 elif Moster_selected == True: 
                     print("Start killing {} ".format(self.Monster_name))
+                    if self.Line == 1 :
+                        Line_Notify.line_Notify("Start killing {} ".format(self.Monster_name))
                     check_if_click = self.If_clickMonster(frame_out,self.template)
-                    timeout = time.time() + 60*3
+                    timeout = time.time() + 60*10
                     while (check_if_click) : 
                         frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)   
                         self.Defeating_Process()
@@ -136,9 +148,13 @@ class Script ():
                         if time.time() > timeout : break# cv2.imshow('frame', frame_out)           
                     # self.Keyboard_input('F2')
                     print("Defeated {}, looting ".format(self.Monster_name))
+                    if self.Line == 1 :
+                        Line_Notify.line_Notify("Defeated {}, looting ".format(self.Monster_name))
                     self.Keyboard_press('space',self.Looting_time)
                     count = count + 1
                     print("We have killed {} {}  ".format(count,self.Monster_name))
+                    if self.Line == 1 :
+                        Line_Notify.line_Notify("We have killed {} {}  ".format(count,self.Monster_name))
                     Moster_selected = False
                     # cv2.imshow('f rame', frame_out)
                     # if cv2.waitKey(1) == ord('q'):
@@ -176,9 +192,9 @@ class Script ():
         self.screen_roi_width = screen_width
         self.screen_roi_top = 1
         self.screen_roi_height = screen_roi_y - 100
-
+    
     def Yolo_Labelling (self,frame,C_x,C_y,Size_x,Size_y):
-        name = self.Monster_name
+        name = str(self.Monster_name)
         if_findtarget = False
         count_lines = 0
         with open("./Yolo/classes.txt","r") as f:
@@ -297,7 +313,7 @@ class Script ():
                 Result = True
 
         return text_hsv,Result
-
+  
     def Refresh_and_Process_screen(self,object_detector):
         frame = self.Refresh_Screen()
         frame_out = frame.copy()
@@ -308,7 +324,7 @@ class Script ():
         dilated = cv2.dilate(mask_eroded,cv2. getStructuringElement(cv2.MORPH_ELLIPSE, (10,10)),iterations = 2)
 
         contours,_ = cv2.findContours(dilated,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE) 
-        min_contour_area = 100  # Define your minimum area threshold > 500 ABA > 300 Ore
+        min_contour_area = 3500  # Define your minimum area threshold > 500 ABA > 300 Ore
         # max_contour_area = 1000
         large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_contour_area]
         # large_contours = [cnt for cnt in contours if cv2.contourArea(cnt) < max_contour_area]
@@ -319,7 +335,7 @@ class Script ():
         for cnt in large_contours:
             x, y, w, h = cv2.boundingRect(cnt)
             center_x = (x*2 + w)/2
-            center_y = (y*2 + h)/2
+            center_y = (y*2 + h)/2 
             # cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 200), 3)
             Size_x_roi.append(w)
             Size_y_roi.append(h)
@@ -328,7 +344,7 @@ class Script ():
 
         return frame, center_x_click, center_y_click, Size_x_roi, Size_y_roi
     
-
+  
     def If_clickMonster(self,frame,template):  
         # frame = cv2.imread("./template/0001.jpg")
         # template = cv2.imread("./template/template1.jpg")
@@ -345,8 +361,8 @@ class Script ():
         for m,n in matches:
             if m.distance < 0.75*n.distance:
                 good.append([m])
-        result = False
-        threashold = 70
+        result = False 
+        threashold = 50
         if len(good) > threashold :
             result = True
         # cv.drawMatchesKnn expects list of lists as matches.
@@ -357,10 +373,13 @@ class Script ():
 
             
     def Defeating_Process(self):
+        if self.Skill_Attack == 1 :
+            self.Keyboard_input("F1")
+        time.sleep(0.1) 
         if self.Use_Normal_attack == 1 :
             self.Keyboard_input("space")
-        self.Keyboard_input("F1")
-        time.sleep(0.1) 
+        if self.Animus_Attack == 1 :
+             self.Keyboard_input(",")
         # self.Keyboard_input("Esc")
         return
     
@@ -394,13 +413,21 @@ class Script ():
         # pydirectinput.click()
         return 
 
+    def Show_Screen(self):
+        object_detector = cv2.createBackgroundSubtractorMOG2() 
+        while(True):
+            frame = self.Refresh_and_Process_screen(object_detector)[0]
+            cv2.imshow('frame', frame)
+            if cv2.waitKey(1) == ord('q'):
+                break
+
 
 
 
 
 class Application_Specific(Script):
  
-    def __init__(self,name,Monster_name,Monster_name_color, Use_Normal_attack , Click_myself ,Looting_time, config_threshold,pt_name):
+    def __init__(self,name,Monster_name,Monster_name_color, Use_Normal_attack , Click_myself ,Looting_time, config_threshold,pt_name, Skill_Attack,Animus_Attack,Line):
         self.Character_name = name
         self.Character_name_list = None
         self.Character_x_coordinate = None
@@ -415,8 +442,11 @@ class Application_Specific(Script):
         screen_roi_width = None
         screen_roi_top = None
         screen_roi_height = None
+        self.Line = Line
         self.detector = None
         self.Click_myself = Click_myself
+        self.Skill_Attack = Skill_Attack
+        self.Animus_Attack = Animus_Attack
         self.Looting_time = Looting_time
         self.config_threshold = config_threshold
         self.pt_name = pt_name
@@ -470,6 +500,8 @@ class Application_Specific(Script):
                             Moster_selected = True  
                             continue   # check myself
                     print("Try to find {}".format(self.Monster_name))
+                    if self.Line == 1 :
+                        Line_Notify.line_Notify("Try to find {}".format(self.Monster_name))
                     if len(x_list) < 30 : 
                         for i in range(0,len(x_list)): # Try to click monster
                             self.Mouse_movement(x_list[i],y_list[i])
@@ -484,6 +516,8 @@ class Application_Specific(Script):
                                 check_if_click = self.If_clickMonster(frame_out,self.template)
                                 if check_if_click == True :
                                     print("We found {} ".format(self.Monster_name))
+                                    if self.Line == 1 :
+                                        Line_Notify.line_Notify("We found {} ".format(self.Monster_name))
                                     Moster_selected = True  
                                     break             
                                 else :  
@@ -498,8 +532,10 @@ class Application_Specific(Script):
                         #     break         
                 elif Moster_selected == True: 
                     print("Start killing {} ".format(self.Monster_name))
+                    if self.Line == 1 :
+                        Line_Notify.line_Notify("Start killing {} ".format(self.Monster_name))
                     check_if_click = self.If_clickMonster(frame_out,self.template)
-                    timeout = time.time() + 60*3
+                    timeout = time.time() + 60*10
                     while (check_if_click) : 
                         frame_out,_,_,_,_= self.Refresh_and_Process_screen(object_detector)   
                         self.Defeating_Process()
@@ -508,9 +544,13 @@ class Application_Specific(Script):
                         # cv2.imshow('frame', frame_out)           
                     # self.Keyboard_input('F2')
                     print("Defeated {}, looting ".format(self.Monster_name))
+                    if self.Line == 1 :
+                        Line_Notify.line_Notify("Defeated {}, looting ".format(self.Monster_name))
                     self.Keyboard_press('space',self.Looting_time)
                     count = count + 1
                     print("We have killed {} {}  ".format(count,self.Monster_name))
+                    if self.Line == 1 :
+                        Line_Notify.line_Notify("We have killed {} {}  ".format(count,self.Monster_name))
                     Moster_selected = False
                     # cv2.imshow('f rame', frame_out)
                     # if cv2.waitKey(1) == ord('q'):
@@ -538,13 +578,21 @@ class Application_Specific(Script):
             img = result[0][0]
             center_x_click = []
             center_y_click = []
+            Spherical_coordinates_r_list = []
+            central_x = (self.screen_roi_left + self.screen_roi_width)/2
+            central_y = (self.screen_roi_top + self.screen_roi_height)/2
             for cls,(x1,y1,x2,y2),conf in result[0][1]:
                 # print(names[cls],x1,y1,x2,y2,conf)
                 cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0))
                 center_x = (x1+x2)/2
                 center_y = (y1+y2)/2
+                Spherical_coordinates_r = ((central_x-center_x)**2 + (central_y - center_y)**2)**(1/2)
                 center_x_click.append(center_x)
                 center_y_click.append(center_y)
+                Spherical_coordinates_r_list.append(Spherical_coordinates_r)
+                sorted_index_from_center = sorted(range(len(Spherical_coordinates_r_list)), key=lambda k: Spherical_coordinates_r_list[k]) # return index
+                center_x_click = [center_x_click[i] for i in sorted_index_from_center]
+                center_y_click = [center_y_click[i] for i in sorted_index_from_center]
         return img, center_x_click, center_y_click, 0 , 0
 
     
@@ -576,43 +624,51 @@ class Keystrokes_Monitor () :
 
 if __name__ == '__main__':
    
-    # script = Script("WorkingFarmer","Assassin Builder A", "Both", 1) # Assassin_Builder_A
-    # script.test_screen()
-    # # script.Yolo_Labelling(1,1,1,1,1)
-
+    # script = Script("Ssiwh","Assassin Builder A", "Both", 1,1,1,1,1,1) # Assassin_Builder_A
+    # script.Show_Screen()
+    # script.Yolo_Labelling(1,1,1,1,1)
+  
     Application = 'A' # 'G' or 'A'
-    target = 'ABA' # when using 'A' choose 'Ore' or 'ABA'
-    ID = 'BlackKingBar'
-
+    target = 'ABA' # when using 'A' choose 'Ore' or 'ABA' or 'KT'
+    ID = 'Siwh'      
+    threshold = None
     if Application == 'A' :
         if target == 'ABA' :
             Monster_name = "Assassin Builder A"
             pt_name = "./weights/ABA_0.15.pt"
             threshold = 0.15
-        if target == ' Ore' :
+        if target == 'Ore' :
             Monster_name = "Ore Crystal"
             pt_name = "./weights/Ore_0.03.pt"
             threshold = 0.03
+        if target == 'KT' :
+            Monster_name = "King Twizer"
+            pt_name = "./weights/KingTwizer_05-07.pt"
+            threshold = 0.03
     elif Application == 'G' :
-            Monster_name = 'Assassin Builder A'
-            
+            Monster_name = "Brutal"
+               
 
     parser = ArgumentParser()
+    # developer modify  
     parser.add_argument("--ID" ,nargs="*", type= str, default = ID, help = SUPPRESS)
-    # parser.add_argument("--ID" ,nargs="*", type= str, default = "SugMaestro")
+    parser.add_argument("--threshold",  nargs="*", type= int, default = threshold, help = SUPPRESS)
+    parser.add_argument("--pt_name",  nargs="*", type= str, help = SUPPRESS)
+    # user modify 
     parser.add_argument("--Monster" ,nargs="*", type= str, default = [Monster_name])
     parser.add_argument("--Color", nargs="*", type= str, default = "Red")
+    parser.add_argument("--Skill_Attack",  nargs="*", type= int, default = 1)
+    parser.add_argument("--Animus_Attack",  nargs="*", type= int, default = 0)
     parser.add_argument("--Normal_Attack",  nargs="*", type= int, default = 1)
     parser.add_argument("--Click_myself",  nargs="*", type= int, default = 0)
-    parser.add_argument("--Looting_time",  nargs="*", type= int, default = 3)
-    parser.add_argument("--threshold",  nargs="*", type= int, default = threshold)
-    parser.add_argument("--pt_name",  nargs="*", type= str)
+    parser.add_argument("--Looting_time",  nargs="*", type= int, default = 5)
+    parser.add_argument("--Line_Notify",  nargs="*", type= int, default = 1)
     args = parser.parse_args()
     Main_Process = None
     if Application == 'A' : 
-        Main_Process = Application_Specific(args.ID,args.Monster,args.Color,args.Normal_Attack,args.Click_myself,args.Looting_time,args.threshold,args.pt_name)
+        Main_Process = Application_Specific(args.ID,args.Monster,args.Color,args.Normal_Attack,args.Click_myself,args.Looting_time,args.threshold,args.pt_name,args.Skill_Attack,args.Animus_Attack,args.Line_Notify)
     elif Application == 'G' :
-        Main_Process = General (args.ID,args.Monster,args.Color,args.Normal_Attack,args.Click_myself,args.Looting_time)
+        Main_Process = General (args.ID,args.Monster,args.Color,args.Normal_Attack,args.Click_myself,args.Looting_time,args.Skill_Attack,args.Animus_Attack,args.Line_Notify)
 
     Keystrokes_Monitor = Keystrokes_Monitor()
     Main_Process_thread = threading.Thread( target=Main_Process.Main)
@@ -620,3 +676,4 @@ if __name__ == '__main__':
     with keyboard.Listener(on_release=Keystrokes_Monitor.on_release) as Keystrokes_Monitor_thread:
         Main_Process_thread.start()
         Keystrokes_Monitor_thread.join()
+            
